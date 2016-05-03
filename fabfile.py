@@ -7,8 +7,9 @@ from collections import OrderedDict as odict
 from botocore.exceptions import ClientError, ValidationError
 
 import logging; logging.basicConfig()
+import coloredlogs
 logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+coloredlogs.install(level=logging.INFO)
 
 from fabric.api import task
 from fabric.utils import abort
@@ -57,8 +58,6 @@ def render():
 @task
 def validate():
     client = boto3.client('cloudformation')
-    # top_level_keys = ['AWSTemplateFormatVersion', 'Description', 'Metadata', 'Parameters',
-    #                   'Mappings', 'Conditions', 'Resources', 'Outputs']
     for json_file in json_files:
         with open(json_file, 'r') as json_contents:
             try:
@@ -67,28 +66,20 @@ def validate():
                 logger.error('Unable to validate {0}. Exception: {1}'.format(json_file, e))
                 abort('Template validation error')
 
-            # try:
-            #     result = json.load(json_contents)
-            # except ValueError, e:
-            #     logger.error('Unable to parse: {0}. Exception: {1}'.format(json_file, e))
-            #     abort('JSON parsing error')
-
-            # for key in result.keys():
-            #     if key not in top_level_keys:
-            #         logger.error('Invalid key "{0}" found in {1}'.format(key, json_file))
-            #         abort('Top level key validation error')
-
-            # if 'Resources' not in result.keys():
-            #     logger.error('Required element Resources missing from {0}'.format(json_file))
-            #     abort('Required key validation error')
 
 @task
-def launch(template=None, stack_name=None):
-    if not template:
+def launch(template_name=None, stack_name=None):
+    if not template_name:
         abort('Must provide template')
     if not stack_name:
         abort('Must provide stack_name')
     client = boto3.client('cloudformation')
+    with open(os.path.join(json_dir, template_name + '.template')) as json_contents:
+        response = client.create_stack(StackName=stack_name,
+                                       TemplateBody=json_contents.read(),
+                                       Capabilities=['CAPABILITY_IAM'])
+        logger.info(response)
+
 
 
 @task

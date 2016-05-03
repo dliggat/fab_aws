@@ -3,3 +3,4 @@ pyaml==15.8.2
 fabric==1.11.1
 boto3==1.2.6
 pytest==2.9.1
+coloredlogs==5.0

@@ -1,183 +1,164 @@
   AWSTemplateFormatVersion: "2010-09-09"
 
-  Description: "Stack for a Lambda function"
+  Description: Stack for a Lambda function
 
   Metadata:
-    CommitHash: "2fc0b203f1de5c80eefdfd2810099e77c478b39b"
-    CommitComment: "Removing redundant file"
-    Rendered: "2016-04-27T14:49:36-07:00"
+    CommitHash: TODO
 
   Parameters:
     MemorySize:
-      Type: "Number"
+      Type: Number
       Default: 256
-      Description: "Memory size for Lambda function"
+      Description: Memory size for Lambda function
     LambdaTimeout:
-      Type: "Number"
+      Type: Number
       Default: 180
-      Description: "Timeout for Lambda function"
+      Description: Timeout for Lambda function
     ScheduleExpression:
-      Type: "String"
-      Default: "cron(15 0 ? * MON-FRI *)"
-      Description: "Schedule expression for the scheduled task"
+      Type: String
+      Default: cron(15 0 ? * MON-FRI *)
+      Description: Schedule expression for the scheduled task
 
   Resources:
+
     LambdaFunction:
-      Type: "AWS::Lambda::Function"
+      Type: AWS::Lambda::Function
       Metadata:
-        Comment: "A Lambda function to monitor running resources in AWS"
-      DependsOn:
-        - "MyLambdaExecutionRole"
+        Comment: A Lambda function to monitor running resources in AWS
+      DependsOn: [MyLambdaExecutionRole]
       Properties:
-        FunctionName: "AWS-Nagbot"
         Code:
           ZipFile:
-            Fn::Join:
-              - "\n"
-              -
-                - "def handler(event, context):"
-                - "    print('this is a no-op and will be overwritten')"
+            "Fn::Join": ["\n", ["def handler(event, context):", "    print('this is a no-op')"] ]
         Role:
-          Fn::GetAtt:
-            - "MyLambdaExecutionRole"
-            - "Arn"
+          "Fn::GetAtt": [MyLambdaExecutionRole, Arn]
         Timeout:
-          Ref: "LambdaTimeout"
-        Handler: "index.handler"
-        Runtime: "python2.7"
+          Ref: LambdaTimeout
+        Handler: index.handler
+        Runtime: python2.7
         MemorySize:
-          Ref: "MemorySize"
+          Ref: MemorySize
+
     MyLambdaExecutionRole:
-      Type: "AWS::IAM::Role"
+      Type: AWS::IAM::Role
       Metadata:
-        Comment: "The role under which the lambda function executes."
+        Comment: The role under which the lambda function executes.
       Properties:
         AssumeRolePolicyDocument:
           Version: "2012-10-17"
           Statement:
-            - Effect: "Allow"
+            - Effect: Allow
               Principal:
-                Service:
-                  - "lambda.amazonaws.com"
+                Service: [lambda.amazonaws.com]
               Action:
-                - "sts:AssumeRole"
+                - sts:AssumeRole
         ManagedPolicyArns:
-          - "arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess"
-          - "arn:aws:iam::aws:policy/AmazonRDSReadOnlyAccess"
-        Path: "/"
+          - arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess
+          - arn:aws:iam::aws:policy/AmazonRDSReadOnlyAccess
+        Path: /
         Policies:
-          - PolicyName: "WriteLogsToCloudWatch"
+          - PolicyName: WriteLogsToCloudWatch
             PolicyDocument:
               Version: "2012-10-17"
               Statement:
-                - Effect: "Allow"
+                - Effect: Allow
                   Action:
-                    - "logs:*"
-                  Resource: "arn:aws:logs:*:*:*"
+                    - logs:*
+                  Resource: arn:aws:logs:*:*:*
+
     LambdaPermission:
-      Type: "AWS::Lambda::Permission"
+      Type: AWS::Lambda::Permission
       Properties:
-        Action: "lambda:InvokeFunction"
+        Action: lambda:InvokeFunction
         SourceArn:
-          Fn::GetAtt: ["ScheduledRule", "Arn"]
-        FunctionName: { "Fn::GetAtt": [ "LambdaFunction", "Arn"] }
-        Principal: "events.amazonaws.com"
+          "Fn::GetAtt": [ScheduledRule, Arn]
+        FunctionName: { "Fn::GetAtt": [LambdaFunction, Arn] }
+        Principal: events.amazonaws.com
+
     NagBotKey:
-      Type: "AWS::KMS::Key"
+      Type: AWS::KMS::Key
       Properties:
-        Description: "A sample key"
+        Description: A sample key
         KeyPolicy:
           Version: "2012-10-17"
-          Id: "key-default-1"
+          Id: key-default-1
           Statement:
-            - Sid: "Allow administration of the key"
-              Effect: "Allow"
+            - Sid: Allow administration of the key
+              Effect: Allow
               Principal:
                 AWS:
-                  Fn::Join:
-                    - ":"
-                    -
-                      - "arn"
-                      - "aws"
-                      - "iam:"
-                      -
-                        Ref: "AWS::AccountId"
-                      - "root"
+                  "Fn::Join": [ ":", ["arn", "aws", "iam:", { "Ref": "AWS::AccountId" }, "root"] ]
               Action:
-                - "kms:Create*"
-                - "kms:Describe*"
-                - "kms:Encrypt*"
-                - "kms:Decrypt*"
-                - "kms:Enable*"
-                - "kms:List*"
-                - "kms:Put*"
-                - "kms:Update*"
-                - "kms:Revoke*"
-                - "kms:Disable*"
-                - "kms:Get*"
-                - "kms:Delete*"
-                - "kms:ScheduleKeyDeletion"
-                - "kms:CancelKeyDeletion"
+                - kms:Create*
+                - kms:Describe*
+                - kms:Encrypt*
+                - kms:Decrypt*
+                - kms:Enable*
+                - kms:List*
+                - kms:Put*
+                - kms:Update*
+                - kms:Revoke*
+                - kms:Disable*
+                - kms:Get*
+                - kms:Delete*
+                - kms:ScheduleKeyDeletion
+                - kms:CancelKeyDeletion
               Resource: "*"
 
-            - Sid: "Lambda Decrypt"
-              Effect: "Allow"
+            - Sid: Lambda Decrypt
+              Effect: Allow
               Action:
-                - "kms:Decrypt*"
+                - kms:Decrypt*
               Principal:
                 AWS:
-                  Fn::GetAtt:
-                    - "MyLambdaExecutionRole"
-                    - "Arn"
+                  "Fn::GetAtt": [MyLambdaExecutionRole, Arn]
               Resource: "*"
+
     ScheduledRule:
-      Type: "AWS::Events::Rule"
+      Type: AWS::Events::Rule
       Properties:
-        Description: "ScheduledRule for the Lambda Function"
+        Description: ScheduledRule for the Lambda Function you see
         ScheduleExpression:
-          Ref: "ScheduleExpression"
-        State: "ENABLED"
+          Ref: ScheduleExpression
+        State: ENABLED
         Targets:
           - Arn:
-              Fn::GetAtt:
-                - "LambdaFunction"
-                - "Arn"
-            Id: "ScheduledRule"
+              "Fn::GetAtt": [LambdaFunction, Arn]
+            Id: ScheduledRule
+
     TravisCIUser:
-      Type: "AWS::IAM::User"
+      Type: AWS::IAM::User
       Properties:
-        Path: "/"
+        Path: /
         Policies:
-          - PolicyName: "PermitTravisUpdatesToLambdaCode"
+          - PolicyName: PermitTravisUpdatesToLambdaCode
             PolicyDocument:
               Version: "2012-10-17"
               Statement:
-                - Effect: "Allow"
+                - Effect: Allow
                   Action:
-                    - "lambda:UpdateFunctionCode"
-                    - "lambda:UpdateFunctionConfiguration"
+                    - lambda:UpdateFunctionCode
+                    - lambda:UpdateFunctionConfiguration
                   Resource:
-                    -
-                      Fn::GetAtt:
-                        - "LambdaFunction"
-                        - "Arn"
+                    - "Fn::GetAtt": [LambdaFunction, Arn]
                 - Action:
-                    - "ec2:DescribeRegions"
-                    - "ec2:DescribeSecurityGroups"
-                  Effect: "Allow"
+                    - ec2:DescribeRegions
+                    - ec2:DescribeSecurityGroups
+                  Effect: Allow
                   Resource: "*"
+
   Outputs:
     LambdaFunction:
-      Value: { Ref: "LambdaFunction" }
+      Value: { Ref: LambdaFunction }
     LambdaFunctionARN:
-      Description: "ARN of the created Lambda function"
-      Value: { "Fn::GetAtt": [ "LambdaFunction", "Arn" ] }
+      Description: ARN of the created Lambda function
+      Value: { "Fn::GetAtt": [ LambdaFunction, Arn ] }
     LambdaExecutionRole:
-      Description: "Role under which the Lambda function executes"
-      Value: { Ref: "MyLambdaExecutionRole" }
+      Description: Role under which the Lambda function executes
+      Value: { Ref: MyLambdaExecutionRole }
     NagBotKmsKeyId:
-      Description: "Role under which the Lambda function executes"
-      Value: { Ref: "NagBotKey" }
+      Description: Role under which the Lambda function executes
+      Value: { Ref: NagBotKey }
     TravisCIUser:
-      Description: "The IAM user created for TravisCI to deploy code changes"
-      Value: { Ref: "TravisCIUser" }
+      Description: The IAM user created for TravisCI to deploy code changes
+      Value: { Ref: TravisCIUser }
