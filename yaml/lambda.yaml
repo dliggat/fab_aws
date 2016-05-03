@@ -1,0 +1,14 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: "{{ AppName }} / Lambda Function + IAM and SGs"
+
+Parameters:
+  NameTagPrefix:
+    Default: ''
+    Type: String
+    Description: Prefix to add to all resource name tags (where applicable).
+  VpcId:
+    AllowedPattern: vpc-[0-9a-f]{8}
+    ConstraintDescription: 'Must start with "vpc-" followed by 8 lowercase hexadecimal digits. Example: vpc-1a2b3c4d'
+    Type: String
+    Description: Virtual Private Cloud (VPC) ID to add resources created in this stack to.
+
