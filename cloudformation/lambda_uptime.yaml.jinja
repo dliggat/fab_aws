@@ -1,112 +1,112 @@
-  AWSTemplateFormatVersion: "2010-09-09"
+AWSTemplateFormatVersion: "2010-09-09"
 
-  Description: A CF stack to implement {{ this['name'] }}.
+Description: A CF stack to implement {{ this['name'] }}.
 
-  Metadata:
-    CommitHash: {{ git['hash'] }}
-    CommitDescription: {{ git['message'] }}
-    AnyUnstagedChanges?: {{ git['unstaged'] }}
-
-
-  Parameters:
-    ScheduleExpression:
-      Type: String
-      Default: {{ lambda_uptime['schedule_expression'] }}
-      Description: How often to invoke the {{ this['name'] }} function
+Metadata:
+  CommitHash: {{ git['hash'] }}
+  CommitDescription: {{ git['message'] }}
+  AnyUnstagedChanges?: {{ git['unstaged'] }}
 
 
-  Resources:
-
-    # The function itself.
-    LambdaFunction:
-      Type: AWS::Lambda::Function
-      Metadata:
-        Comment: {{ lambda_uptime['description'] }}
-      DependsOn: [ LambdaFunctionExecutionRole ]
-      Properties:
-        Code:
-          ZipFile:
-            "Fn::Join":
-              - "\n"
-              - - "def handler(event, context):"
-                - "    print('This is a no-op; will be overwritten later.')"
-        Role: { "Fn::GetAtt": [ LambdaFunctionExecutionRole, Arn ] }
-        Timeout: {{ lambda_uptime['timeout'] }}
-        Handler: index.handler
-        Runtime: python2.7
-        MemorySize: {{ lambda_uptime['memory_size'] }}
+Parameters:
+  ScheduleExpression:
+    Type: String
+    Default: {{ lambda_uptime['schedule_expression'] }}
+    Description: How often to invoke the {{ this['name'] }} function
 
 
-    # The IAM role that the lambda function will execute under.
-    LambdaFunctionExecutionRole:
-      Type: AWS::IAM::Role
-      Properties:
-        AssumeRolePolicyDocument:
-          Version: "2012-10-17"
-          Statement:
-            - Effect: Allow
-              Principal:
-                Service: [ lambda.amazonaws.com ]
-              Action:
-                - sts:AssumeRole
-        Path: /
-        Policies:
-          - PolicyName: WriteLogsToCloudWatch
-            PolicyDocument:
-              Version: "2012-10-17"
-              Statement:
-                - Effect: Allow
-                  Action: [ "logs:*" ]
-                  Resource: "arn:aws:logs:*:*:*"
-          - PolicyName: PublishToSNSTopic
-            PolicyDocument:
-              Version: "2012-10-17"
-              Statement:
-                - Effect: Allow
-                  Action: [ "sns:Publish" ]
-                  Resource: { "Ref" : "NotificationTopic" }
-        # Unused.
-        # ManagedPolicyArns:
-        #   - arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess
+Resources:
+
+  # The function itself.
+  LambdaFunction:
+    Type: AWS::Lambda::Function
+    Metadata:
+      Comment: {{ lambda_uptime['description'] }}
+    DependsOn: [ LambdaFunctionExecutionRole ]
+    Properties:
+      Code:
+        ZipFile:
+          "Fn::Join":
+            - "\n"
+            - - "def handler(event, context):"
+              - "    print('This is a no-op; will be overwritten later.')"
+      Role: { "Fn::GetAtt": [ LambdaFunctionExecutionRole, Arn ] }
+      Timeout: {{ lambda_uptime['timeout'] }}
+      Handler: index.handler
+      Runtime: python2.7
+      MemorySize: {{ lambda_uptime['memory_size'] }}
+
+
+  # The IAM role that the lambda function will execute under.
+  LambdaFunctionExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [ lambda.amazonaws.com ]
+            Action:
+              - sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: WriteLogsToCloudWatch
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: [ "logs:*" ]
+                Resource: "arn:aws:logs:*:*:*"
+        - PolicyName: PublishToSNSTopic
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: [ "sns:Publish" ]
+                Resource: { "Ref" : "NotificationTopic" }
+      # Unused.
+      # ManagedPolicyArns:
+      #   - arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess
 
 
 
-    # Permits the events service to invoke the service.
-    LambdaPermission:
-      Type: AWS::Lambda::Permission
-      Properties:
-        Action: lambda:InvokeFunction
-        SourceArn:
-          "Fn::GetAtt": [ ScheduledRule, Arn ]
-        FunctionName: { "Fn::GetAtt": [ LambdaFunction, Arn ] }
-        Principal: events.amazonaws.com
+  # Permits the events service to invoke the service.
+  LambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      SourceArn:
+        "Fn::GetAtt": [ ScheduledRule, Arn ]
+      FunctionName: { "Fn::GetAtt": [ LambdaFunction, Arn ] }
+      Principal: events.amazonaws.com
 
 
-    # The cron rule for the execution.
-    ScheduledRule:
-      Type: AWS::Events::Rule
-      Properties:
-        Description: ScheduledRule for the LambdaFunction
-        ScheduleExpression: { "Ref": "ScheduleExpression" }
-        State: ENABLED
-        Targets:
-          - Arn: { "Fn::GetAtt": [ LambdaFunction, Arn ] }
-            Id: ScheduledRule
+  # The cron rule for the execution.
+  ScheduledRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: ScheduledRule for the LambdaFunction
+      ScheduleExpression: { "Ref": "ScheduleExpression" }
+      State: ENABLED
+      Targets:
+        - Arn: { "Fn::GetAtt": [ LambdaFunction, Arn ] }
+          Id: ScheduledRule
 
 
-    # The SNS topic to publish events to.
-    NotificationTopic:
-      Type: AWS::SNS::Topic
-      Properties:
-        DisplayName: {{ this['name'] }}Topic
+  # The SNS topic to publish events to.
+  NotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: {{ this['name'] }}Topic
 
 
-  Outputs:
-    LambdaFunction:
-      Value: { "Ref": "LambdaFunction" }
-    LambdaFunctionARN:
-      Value: { "Fn::GetAtt": [ LambdaFunction, Arn ] }
-    LambdaFunctionExecutionRole:
-      Value: { "Ref": "LambdaFunctionExecutionRole" }
-    SnsTopic:
-      Value: { "Ref": "NotificationTopic" }
+Outputs:
+  LambdaFunction:
+    Value: { "Ref": "LambdaFunction" }
+  LambdaFunctionARN:
+    Value: { "Fn::GetAtt": [ LambdaFunction, Arn ] }
+  LambdaFunctionExecutionRole:
+    Value: { "Ref": "LambdaFunctionExecutionRole" }
+  SnsTopic:
+    Value: { "Ref": "NotificationTopic" }
