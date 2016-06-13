@@ -1,48 +1,41 @@
   AWSTemplateFormatVersion: "2010-09-09"
 
-  Description: Stack for a Lambda function
+  Description: A CF stack to implement lambda_uptime
 
   Metadata:
     CommitHash: TODO
 
+
   Parameters:
-    MemorySize:
-      Type: Number
-      Default: 256
-      Description: Memory size for Lambda function
-    LambdaTimeout:
-      Type: Number
-      Default: 180
-      Description: Timeout for Lambda function
     ScheduleExpression:
       Type: String
       Default: {{ lambda_uptime['cron_schedule'] }}
-      Description: Schedule expression for the scheduled task
+      Description: How often to invoke the lambda_uptime function
+
 
   Resources:
 
+    # The function itself.
     LambdaFunction:
       Type: AWS::Lambda::Function
       Metadata:
         Comment: A Lambda function to monitor running resources in AWS (updated comment)
-      DependsOn: [MyLambdaExecutionRole]
+      DependsOn: [LambdaFunctionExecutionRole]
       Properties:
         Code:
           ZipFile:
             "Fn::Join": ["\n", ["def handler(event, context):", "    print('this is a no-op')"] ]
         Role:
-          "Fn::GetAtt": [MyLambdaExecutionRole, Arn]
-        Timeout:
-          Ref: LambdaTimeout
+          "Fn::GetAtt": [LambdaFunctionExecutionRole, Arn]
+        Timeout: {{ lambda_uptime['timeout'] }}
         Handler: index.handler
         Runtime: python2.7
-        MemorySize:
-          Ref: MemorySize
+        MemorySize: {{ lambda_uptime['memory_size'] }}
 
-    MyLambdaExecutionRole:
+
+    # The IAM role that the lambda function will execute under.
+    LambdaFunctionExecutionRole:
       Type: AWS::IAM::Role
-      Metadata:
-        Comment: The role under which the lambda function executes.
       Properties:
         AssumeRolePolicyDocument:
           Version: "2012-10-17"
@@ -66,6 +59,8 @@
                     - logs:*
                   Resource: arn:aws:logs:*:*:*
 
+
+    # Permits the events service to invoke the service.
     LambdaPermission:
       Type: AWS::Lambda::Permission
       Properties:
@@ -75,49 +70,12 @@
         FunctionName: { "Fn::GetAtt": [LambdaFunction, Arn] }
         Principal: events.amazonaws.com
 
-    NagBotKey:
-      Type: AWS::KMS::Key
-      Properties:
-        Description: A sample key
-        KeyPolicy:
-          Version: "2012-10-17"
-          Id: key-default-1
-          Statement:
-            - Sid: Allow administration of the key
-              Effect: Allow
-              Principal:
-                AWS:
-                  "Fn::Join": [ ":", ["arn", "aws", "iam:", { "Ref": "AWS::AccountId" }, "root"] ]
-              Action:
-                - kms:Create*
-                - kms:Describe*
-                - kms:Encrypt*
-                - kms:Decrypt*
-                - kms:Enable*
-                - kms:List*
-                - kms:Put*
-                - kms:Update*
-                - kms:Revoke*
-                - kms:Disable*
-                - kms:Get*
-                - kms:Delete*
-                - kms:ScheduleKeyDeletion
-                - kms:CancelKeyDeletion
-              Resource: "*"
 
-            - Sid: Lambda Decrypt
-              Effect: Allow
-              Action:
-                - kms:Decrypt*
-              Principal:
-                AWS:
-                  "Fn::GetAtt": [MyLambdaExecutionRole, Arn]
-              Resource: "*"
-
+    # The cron rule for the execution.
     ScheduledRule:
       Type: AWS::Events::Rule
       Properties:
-        Description: ScheduledRule for the Lambda Function you see
+        Description: ScheduledRule for the LambdaFunction
         ScheduleExpression:
           Ref: ScheduleExpression
         State: ENABLED
@@ -126,26 +84,6 @@
               "Fn::GetAtt": [LambdaFunction, Arn]
             Id: ScheduledRule
 
-    TravisCIUser:
-      Type: AWS::IAM::User
-      Properties:
-        Path: /
-        Policies:
-          - PolicyName: PermitTravisUpdatesToLambdaCode
-            PolicyDocument:
-              Version: "2012-10-17"
-              Statement:
-                - Effect: Allow
-                  Action:
-                    - lambda:UpdateFunctionCode
-                    - lambda:UpdateFunctionConfiguration
-                  Resource:
-                    - "Fn::GetAtt": [LambdaFunction, Arn]
-                - Action:
-                    - ec2:DescribeRegions
-                    - ec2:DescribeSecurityGroups
-                  Effect: Allow
-                  Resource: "*"
 
   Outputs:
     LambdaFunction:
@@ -155,10 +93,4 @@
       Value: { "Fn::GetAtt": [ LambdaFunction, Arn ] }
     LambdaExecutionRole:
       Description: Role under which the Lambda function executes
-      Value: { Ref: MyLambdaExecutionRole }
-    NagBotKmsKeyId:
-      Description: Role under which the Lambda function executes
-      Value: { Ref: NagBotKey }
-    TravisCIUser:
-      Description: The IAM user created for TravisCI to deploy code changes
-      Value: { Ref: TravisCIUser }
+      Value: { Ref: LambdaFunctionExecutionRole }
