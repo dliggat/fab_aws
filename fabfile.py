@@ -118,7 +118,7 @@ def validate():
 
 
 @task
-def launch(template_name=None, stack_name=None):
+def provision(template_name=None, stack_name=None):
     """Creates or updates a CloudFormation stack based on the supplied template type name.
 
     Args:
