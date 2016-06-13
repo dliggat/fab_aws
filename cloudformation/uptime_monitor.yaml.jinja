@@ -11,7 +11,7 @@ Metadata:
 Parameters:
   ScheduleExpression:
     Type: String
-    Default: {{ lambda_uptime['schedule_expression'] }}
+    Default: {{ uptime_monitor['schedule_expression'] }}
     Description: How often to invoke the {{ this['name'] }} function
 
 
@@ -21,7 +21,7 @@ Resources:
   LambdaFunction:
     Type: AWS::Lambda::Function
     Metadata:
-      Comment: {{ lambda_uptime['description'] }}
+      Comment: {{ uptime_monitor['description'] }}
     DependsOn: [ LambdaFunctionExecutionRole ]
     Properties:
       Code:
@@ -31,10 +31,10 @@ Resources:
             - - "def handler(event, context):"
               - "    print('This is a no-op; will be overwritten later.')"
       Role: { "Fn::GetAtt": [ LambdaFunctionExecutionRole, Arn ] }
-      Timeout: {{ lambda_uptime['timeout'] }}
+      Timeout: {{ uptime_monitor['timeout'] }}
       Handler: index.handler
       Runtime: python2.7
-      MemorySize: {{ lambda_uptime['memory_size'] }}
+      MemorySize: {{ uptime_monitor['memory_size'] }}
 
 
   # The IAM role that the lambda function will execute under.
@@ -64,7 +64,7 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: [ "sns:Publish" ]
-                Resource: { "Ref" : "NotificationTopic" }
+                Resource: { Ref : NotificationTopic }
       # Unused.
       # ManagedPolicyArns:
       #   - arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess
@@ -87,7 +87,7 @@ Resources:
     Type: AWS::Events::Rule
     Properties:
       Description: ScheduledRule for the LambdaFunction
-      ScheduleExpression: { "Ref": "ScheduleExpression" }
+      ScheduleExpression: { Ref : ScheduleExpression }
       State: ENABLED
       Targets:
         - Arn: { "Fn::GetAtt": [ LambdaFunction, Arn ] }
@@ -103,10 +103,10 @@ Resources:
 
 Outputs:
   LambdaFunction:
-    Value: { "Ref": "LambdaFunction" }
+    Value: { Ref : LambdaFunction }
   LambdaFunctionARN:
     Value: { "Fn::GetAtt": [ LambdaFunction, Arn ] }
   LambdaFunctionExecutionRole:
-    Value: { "Ref": "LambdaFunctionExecutionRole" }
+    Value: { Ref : LambdaFunctionExecutionRole }
   SnsTopic:
-    Value: { "Ref": "NotificationTopic" }
+    Value: { Ref : NotificationTopic }

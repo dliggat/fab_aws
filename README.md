@@ -27,7 +27,7 @@ Metadata:
 Parameters:
   ScheduleExpression:
     Type: String
-    Default: {{ lambda_uptime['schedule_expression'] }}
+    Default: {{ uptime_monitor['schedule_expression'] }}
     Description: How often to invoke the {{ this['name'] }} function
 
 
@@ -36,7 +36,7 @@ Resources:
     Type: AWS::Events::Rule
     Properties:
       Description: ScheduledRule for the LambdaFunction
-      ScheduleExpression: { "Ref": "ScheduleExpression" }
+      ScheduleExpression: { Ref : ScheduleExpression }
       State: ENABLED
       Targets:
         - Arn: { "Fn::GetAtt": [ LambdaFunction, Arn ] }
@@ -52,7 +52,7 @@ Resources:
 
 Outputs:
   SnsTopic:
-    Value: { "Ref": "NotificationTopic" }
+    Value: { Ref : NotificationTopic }
 ```
 
 
