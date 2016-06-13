@@ -1,4 +1,4 @@
-name: lambda_uptime
+description: A function to monitor websites, and alert on unavailability
 schedule_expression: rate(10 minutes)
 memory_size: 256
 timeout: 180

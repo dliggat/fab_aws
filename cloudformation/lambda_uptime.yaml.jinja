@@ -12,7 +12,7 @@
     ScheduleExpression:
       Type: String
       Default: {{ lambda_uptime['schedule_expression'] }}
-      Description: How often to invoke the lambda_uptime function
+      Description: How often to invoke the {{ this['name'] }} function
 
 
   Resources:
@@ -21,7 +21,7 @@
     LambdaFunction:
       Type: AWS::Lambda::Function
       Metadata:
-        Comment: A Lambda function to monitor running resources in AWS
+        Comment: {{ lambda_uptime['description'] }}
       DependsOn: [ LambdaFunctionExecutionRole ]
       Properties:
         Code:
@@ -98,7 +98,7 @@
     NotificationTopic:
       Type: AWS::SNS::Topic
       Properties:
-        DisplayName: {{ lambda_uptime['name'] }}Topic
+        DisplayName: {{ this['name'] }}Topic
 
 
   Outputs:
