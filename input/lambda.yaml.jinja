@@ -42,7 +42,7 @@
     MyLambdaExecutionRole:
       Type: AWS::IAM::Role
       Metadata:
-        Comment: The role under which the lambda function executes.
+        Comment: The role under which the lambda function executes. {{ lambda['whatever'] }}
       Properties:
         AssumeRolePolicyDocument:
           Version: "2012-10-17"
