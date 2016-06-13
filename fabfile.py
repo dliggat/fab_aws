@@ -46,12 +46,16 @@ OUTPUT_DIR   = os.path.join(ROOT_DIR, '_output')
 OUTPUT_EXT   = '.template'
 OUTPUT_FILES = glob.glob(os.path.join(OUTPUT_DIR, '*{0}'.format(OUTPUT_EXT)))
 
-# Ensure that .local.yml config files are loaded last, so that they take precedence in the config dict.
+# Ensure that .local.yaml config files are loaded last, so that they take precedence in the config dict.
 CONFIG_DIR   = os.path.join(ROOT_DIR, 'config')
 CONFIG_FILES = sorted(glob.glob(os.path.join(CONFIG_DIR, '*{0}'.format('.yaml'))), reverse=True)
 
-def load_config():
-    """Load the config from the config directory into a deep dict, keyed by stack type."""
+def load_config(optional=None):
+    """Load the config from the config directory into a deep dict, keyed by stack type.
+
+    Args:
+      optional (dict): An optional supplied hash to merge into the config object.
+    """
     config = {
                'git': {
                         'hash':    subprocess.check_output(['git', 'rev-parse', 'HEAD'])[:-1],
@@ -59,6 +63,9 @@ def load_config():
                         'unstaged': True if subprocess.call('git diff-index --quiet HEAD --'.split(' ')) else False
                       }
              }
+    if optional:
+        config.update(optional)
+
     for config_file in CONFIG_FILES:
         with open(config_file, 'r') as config_file_contents:
             data = yaml.load(config_file_contents.read())
@@ -78,7 +85,6 @@ def load_config():
 @task(default=True)
 def render():
     """Render yaml.jinja to JSON, via the loaded config."""
-    config = load_config()
     if not INPUT_FILES:
         abort('No YAML files present in directory')
 
@@ -94,6 +100,7 @@ def render():
     for input_file in INPUT_FILES:
         basename = os.path.basename(input_file).split('.')[0]
         template = env.get_template('{0}{1}'.format(basename, INPUT_EXT))
+        config   = load_config({ 'this': { 'name': basename } })
         rendered = template.render(**config)
         data = yaml.load(rendered)
 

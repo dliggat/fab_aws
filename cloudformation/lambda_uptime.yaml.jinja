@@ -1,6 +1,6 @@
   AWSTemplateFormatVersion: "2010-09-09"
 
-  Description: A CF stack to implement lambda_uptime.
+  Description: A CF stack to implement {{ this['name'] }}.
 
   Metadata:
     CommitHash: {{ git['hash'] }}
@@ -28,7 +28,8 @@
           ZipFile:
             "Fn::Join":
               - "\n"
-              - [ "def handler(event, context):", "    print('this is a no-op')" ]
+              - - "def handler(event, context):"
+                - "    print('This is a no-op; will be overwritten later.')"
         Role: { "Fn::GetAtt": [ LambdaFunctionExecutionRole, Arn ] }
         Timeout: {{ lambda_uptime['timeout'] }}
         Handler: index.handler
