@@ -1,1 +1,2 @@
 _output/*.template
+config/*.local.yml

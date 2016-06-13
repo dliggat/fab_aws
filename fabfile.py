@@ -46,8 +46,9 @@ OUTPUT_DIR   = os.path.join(ROOT_DIR, '_output')
 OUTPUT_EXT   = '.template'
 OUTPUT_FILES = glob.glob(os.path.join(OUTPUT_DIR, '*{0}'.format(OUTPUT_EXT)))
 
+# Ensure that .local.yml config files are loaded last, so that they take precedence in the config dict.
 CONFIG_DIR   = os.path.join(ROOT_DIR, 'config')
-CONFIG_FILES = glob.glob(os.path.join(CONFIG_DIR, '*{0}'.format('.yaml')))
+CONFIG_FILES = sorted(glob.glob(os.path.join(CONFIG_DIR, '*{0}'.format('.yaml'))), reverse=True)
 
 def load_config():
     """Load the config from the config directory into a deep dict, keyed by stack type."""
@@ -61,7 +62,14 @@ def load_config():
     for config_file in CONFIG_FILES:
         with open(config_file, 'r') as config_file_contents:
             data = yaml.load(config_file_contents.read())
-            config[os.path.basename(config_file).split('.')[0]] = data
+            if not data:
+                continue
+            basename = os.path.basename(config_file).split('.')[0]
+            if basename in config:
+                config[basename].update(data)
+            else:
+                config[basename] = data
+            print(os.path.basename(config_file).split('.')[0])
     logger.info('Loaded config: %s', config)
     return config
 

@@ -1,6 +1,6 @@
   AWSTemplateFormatVersion: "2010-09-09"
 
-  Description: A CF stack to implement lambda_uptime
+  Description: A CF stack to implement lambda_uptime {{ lambda_uptime['foobar'] }}
 
   Metadata:
     CommitHash: {{ git['hash'] }}
