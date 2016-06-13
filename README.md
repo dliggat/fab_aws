@@ -14,7 +14,7 @@ A collection of utilities for AWS CloudFormation & Lambda, implemented as Python
 
 `cf-toolkit` converts CloudFormation YAML from `cloudformation/` into JSON, and injects configuration state from `config/` along the way. Final output appears at `_output/`.
 
-This is all convention driven, based on filename: `config/foo.yaml` is injected into `cloudformation/foo.yaml.jinja`, as rendered out as `_output/foo.template`:
+This is all convention driven, based on filename: configuration from `config/foo.yaml` is injected into a CloudFormation-YAML template at `cloudformation/foo.yaml.jinja`, and rendered out as CloudFormation-JSON at `_output/foo.template`:
 
 ```bash
 fab render validate
