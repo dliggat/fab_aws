@@ -19,24 +19,24 @@ from fabric.utils import abort
 
 # Configure PyYaml to preserve order in dictionaries (ensures CloudFormation templates render
 # in an expected top-level key order).
-_mapping_tag = yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG
-
 def construct_ordered_mapping(loader, node, deep=False):
     if isinstance(node, yaml.MappingNode):
         loader.flatten_mapping(node)
     return odict(loader.construct_pairs(node, deep))
+
 def construct_yaml_ordered_map(loader, node, deep=False):
     data = odict()
     yield data
     value = construct_ordered_mapping(loader, node, deep)
     data.update(value)
 
-yaml.add_constructor(_mapping_tag, construct_yaml_ordered_map)
+mapping_tag = yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG
+yaml.add_constructor(mapping_tag, construct_yaml_ordered_map)
 
 
 # Various constants and config setup.
 ROOT_DIR     = os.path.dirname(__file__)
-INPUT_DIR    = os.path.join(ROOT_DIR, 'input')
+INPUT_DIR    = os.path.join(ROOT_DIR, 'cloudformation')
 INPUT_EXT    = '.yaml.jinja'
 INPUT_FILES  = glob.glob(os.path.join(INPUT_DIR, '*{0}'.format(INPUT_EXT)))
 
