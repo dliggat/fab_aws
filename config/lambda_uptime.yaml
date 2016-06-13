@@ -1,3 +1,4 @@
-cron_schedule: cron(15 0 ? * MON-FRI *)
+name: lambda_uptime
+schedule_expression: rate(10 minutes)
 memory_size: 256
 timeout: 180

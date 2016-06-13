@@ -11,7 +11,7 @@
   Parameters:
     ScheduleExpression:
       Type: String
-      Default: {{ lambda_uptime['cron_schedule'] }}
+      Default: {{ lambda_uptime['schedule_expression'] }}
       Description: How often to invoke the lambda_uptime function
 
 
@@ -21,12 +21,14 @@
     LambdaFunction:
       Type: AWS::Lambda::Function
       Metadata:
-        Comment: A Lambda function to monitor running resources in AWS (updated comment)
-      DependsOn: [LambdaFunctionExecutionRole]
+        Comment: A Lambda function to monitor running resources in AWS
+      DependsOn: [ LambdaFunctionExecutionRole ]
       Properties:
         Code:
           ZipFile:
-            "Fn::Join": ["\n", ["def handler(event, context):", "    print('this is a no-op')"] ]
+            "Fn::Join":
+              - "\n"
+              - ["def handler(event, context):", "    print('this is a no-op')"]
         Role:
           "Fn::GetAtt": [LambdaFunctionExecutionRole, Arn]
         Timeout: {{ lambda_uptime['timeout'] }}
@@ -44,12 +46,11 @@
           Statement:
             - Effect: Allow
               Principal:
-                Service: [lambda.amazonaws.com]
+                Service: [ lambda.amazonaws.com ]
               Action:
                 - sts:AssumeRole
-        ManagedPolicyArns:
-          - arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess
-          - arn:aws:iam::aws:policy/AmazonRDSReadOnlyAccess
+        # ManagedPolicyArns:
+        #   - arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess
         Path: /
         Policies:
           - PolicyName: WriteLogsToCloudWatch
@@ -57,9 +58,16 @@
               Version: "2012-10-17"
               Statement:
                 - Effect: Allow
-                  Action:
-                    - logs:*
-                  Resource: arn:aws:logs:*:*:*
+                  Action: [ "logs:*" ]
+                  Resource: "arn:aws:logs:*:*:*"
+          - PolicyName: PublishToSNSTopic
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: Allow
+                  Action: [ "sns:Publish" ]
+                  Resource: { "Ref" : "NotificationTopic" }
+
 
 
     # Permits the events service to invoke the service.
@@ -78,21 +86,27 @@
       Type: AWS::Events::Rule
       Properties:
         Description: ScheduledRule for the LambdaFunction
-        ScheduleExpression:
-          Ref: ScheduleExpression
+        ScheduleExpression: { "Ref": "ScheduleExpression" }
         State: ENABLED
         Targets:
           - Arn:
-              "Fn::GetAtt": [LambdaFunction, Arn]
+              "Fn::GetAtt": [ LambdaFunction, Arn ]
             Id: ScheduledRule
+
+
+    # The SNS topic to publish events to.
+    NotificationTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        DisplayName: {{ lambda_uptime['name'] }}Topic
 
 
   Outputs:
     LambdaFunction:
-      Value: { Ref: LambdaFunction }
+      Value: { "Ref": "LambdaFunction" }
     LambdaFunctionARN:
-      Description: ARN of the created Lambda function
       Value: { "Fn::GetAtt": [ LambdaFunction, Arn ] }
-    LambdaExecutionRole:
-      Description: Role under which the Lambda function executes
-      Value: { Ref: LambdaFunctionExecutionRole }
+    LambdaFunctionExecutionRole:
+      Value: { "Ref": "LambdaFunctionExecutionRole" }
+    SnsTopic:
+      Value: { "Ref": "NotificationTopic" }
