@@ -42,6 +42,9 @@ Resources:
         - Arn: { "Fn::GetAtt": [ LambdaFunction, Arn ] }
           Id: ScheduledRule
 
+  # Other resources
+  # ...
+
   NotificationTopic:
     Type: AWS::SNS::Topic
     Properties:
