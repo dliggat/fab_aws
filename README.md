@@ -4,7 +4,7 @@ A collection of utilities for AWS CloudFormation & Lambda, implemented as Python
 
 ## Install
 
-1. Set up a `virtualenv`:
+1. Set up a `virtualenv` (I recommend [`pyenv-virtualenv`](https://github.com/yyuu/pyenv-virtualenv), highly):
   * `pyenv virtualenv cf-toolkit`
 2. Install dependencies:
   * `pip install -U -r requirements.txt`
