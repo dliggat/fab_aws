@@ -10,6 +10,50 @@ A collection of utilities for AWS CloudFormation & Lambda, implemented as Python
   * `pip install -U -r requirements.txt`
 
 
+## Write CloudFormation in YAML
+JSON is awkward to write and read, and among its other deficiencies as a configuration file format, does not allow comments. So write in YAML, and use `cf-toolkit` to convert:
+
+```yaml
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: A CF stack to implement {{ this['name'] }}.
+
+Metadata:
+  CommitHash: {{ git['hash'] }}
+  CommitDescription: {{ git['message'] }}
+  AnyUnstagedChanges?: {{ git['unstaged'] }}
+
+
+Parameters:
+  ScheduleExpression:
+    Type: String
+    Default: {{ lambda_uptime['schedule_expression'] }}
+    Description: How often to invoke the {{ this['name'] }} function
+
+
+Resources:
+  ScheduledRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: ScheduledRule for the LambdaFunction
+      ScheduleExpression: { "Ref": "ScheduleExpression" }
+      State: ENABLED
+      Targets:
+        - Arn: { "Fn::GetAtt": [ LambdaFunction, Arn ] }
+          Id: ScheduledRule
+
+  NotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: {{ this['name'] }}Topic
+
+Outputs:
+  SnsTopic:
+    Value: { "Ref": "NotificationTopic" }
+```
+
+
+
 ## Render CloudFormation JSON
 
 `cf-toolkit` converts CloudFormation YAML from `cloudformation/` into JSON, and injects configuration state from `config/` along the way. Final output appears at `_output/`.
