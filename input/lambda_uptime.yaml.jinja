@@ -16,7 +16,7 @@
       Description: Timeout for Lambda function
     ScheduleExpression:
       Type: String
-      Default: cron(15 0 ? * MON-FRI *)
+      Default: {{ lambda_uptime['cron_schedule'] }}
       Description: Schedule expression for the scheduled task
 
   Resources:
@@ -42,7 +42,7 @@
     MyLambdaExecutionRole:
       Type: AWS::IAM::Role
       Metadata:
-        Comment: The role under which the lambda function executes. {{ lambda['whatever'] }}
+        Comment: The role under which the lambda function executes.
       Properties:
         AssumeRolePolicyDocument:
           Version: "2012-10-17"

@@ -1,0 +1,1 @@
+cron_schedule: cron(15 0 ? * MON-FRI *)
