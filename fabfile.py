@@ -32,40 +32,47 @@ def construct_yaml_ordered_map(loader, node, deep=False):
 
 yaml.add_constructor(_mapping_tag, construct_yaml_ordered_map)
 
-ROOT_DIR = os.path.dirname(__file__)
-JSON_DIR = os.path.join(ROOT_DIR, '_output')
-JSON_EXT = '.template'
-YAML_FILES = glob.glob(os.path.join(ROOT_DIR, 'cloudformation/*.yaml.jinja'))
-JSON_FILES = glob.glob(os.path.join(JSON_DIR, '*{0}'.format(JSON_EXT)))
+ROOT_DIR     = os.path.dirname(__file__)
+INPUT_DIR    = os.path.join(ROOT_DIR, 'input')
+INPUT_FILES  = glob.glob(os.path.join(INPUT_DIR, '*.yaml.jinja'))
+
+OUTPUT_DIR   = os.path.join(ROOT_DIR, '_output')
+OUTPUT_EXT   = '.template'
+OUTPUT_FILES = glob.glob(os.path.join(OUTPUT_DIR, '*{0}'.format(OUTPUT_EXT)))
 
 
 @task(default=True)
 def render():
-    if not YAML_FILES:
+    if not INPUT_FILES:
         abort('No YAML files present in directory')
 
-    if not os.path.exists(JSON_DIR):
-        logger.info('Created directory: %s', JSON_DIR)
-        os.makedirs(JSON_DIR)
+    if not os.path.exists(OUTPUT_DIR):
+        logger.info('Created directory: %s', OUTPUT_DIR)
+        os.makedirs(OUTPUT_DIR)
 
-    for yaml_file in YAML_FILES:
-        with open(yaml_file, 'r') as yaml_contents:
-            data = yaml.load(yaml_contents.read())
-            json_str = json.dumps(data, indent=2)
-            json_file = os.path.join(JSON_DIR, os.path.basename(yaml_file).split('.')[0]) + JSON_EXT
-            with open(json_file, 'w') as json_contents:
-                json_contents.write(json_str)
-                logger.info('Converted %s to %s', os.path.basename(yaml_file), os.path.basename(json_file))
+    for input_file in INPUT_FILES:
+        with open(input_file, 'r') as jinja_contents:
+
+            jenv = jinja2.Environment(trim_blocks=True, lstrip_blocks=True, undefined=jinja2.StrictUndefined)
+            jenv.loader = jinja2.FileSystemLoader('./jinja')
+
+            data = yaml.load(jinja_contents.read())
+            output_str = json.dumps(data, indent=2)
+            print("yo", os.path.basename(input_file).split('.')[0])
+            output_file = os.path.join(OUTPUT_DIR, os.path.basename(input_file).split('.')[0]) + OUTPUT_EXT
+            with open(output_file, 'w') as output_contents:
+                output_contents.write(output_str)
+                logger.info('Converted %s to %s', os.path.basename(input_file), os.path.basename(output_file))
 
 @task
 def validate():
     client = boto3.client('cloudformation')
-    for json_file in JSON_FILES:
-        with open(json_file, 'r') as json_contents:
+    for output_file in OUTPUT_FILES:
+        with open(output_file, 'r') as output_contents:
             try:
-                client.validate_template(TemplateBody=json_contents.read())
+                client.validate_template(TemplateBody=output_contents.read())
             except (ClientError, ValidationError) as e:
-                logger.error('Unable to validate {0}. Exception: {1}'.format(json_file, e))
+                logger.error('Unable to validate {0}. Exception: {1}'.format(output_file, e))
                 abort('Template validation error')
 
 
@@ -90,21 +97,21 @@ def launch(template_name=None, stack_name=None):
     except ClientError:
         logger.info('No stack named {0}; proceeding with stack creation'.format(stack_name))
 
-    with open(os.path.join(JSON_DIR, template_name + JSON_EXT)) as json_contents:
+    with open(os.path.join(OUTPUT_DIR, template_name + OUTPUT_EXT)) as output_contents:
         if update:
             response = client.update_stack(StackName=stack_name,
-                                           TemplateBody=json_contents.read(),
+                                           TemplateBody=output_contents.read(),
                                            Capabilities=['CAPABILITY_IAM'])
         else:
             response = client.create_stack(StackName=stack_name,
-                                           TemplateBody=json_contents.read(),
+                                           TemplateBody=output_contents.read(),
                                            Capabilities=['CAPABILITY_IAM'])
         logger.info(response)
 
 
 @task
 def clean():
-    for f in JSON_FILES:
+    for f in OUTPUT_FILES:
         os.remove(f)
 
 
