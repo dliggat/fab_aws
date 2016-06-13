@@ -3,7 +3,9 @@ import glob
 import jinja2
 import json
 import os
+import subprocess
 import yaml
+
 from collections import OrderedDict as odict
 from botocore.exceptions import ClientError, ValidationError
 
@@ -49,7 +51,13 @@ CONFIG_FILES = glob.glob(os.path.join(CONFIG_DIR, '*{0}'.format('.yaml')))
 
 def load_config():
     """Load the config from the config directory into a deep dict, keyed by stack type."""
-    config = {}
+    config = {
+               'git': {
+                        'hash':    subprocess.check_output(['git', 'rev-parse', 'HEAD'])[:-1],
+                        'message': subprocess.check_output(['git', 'log', '-1', '--pretty=%B']).strip().replace('"', ''),
+                        'unstaged': True if subprocess.call('git diff-index --quiet HEAD --'.split(' ')) else False
+                      }
+             }
     for config_file in CONFIG_FILES:
         with open(config_file, 'r') as config_file_contents:
             data = yaml.load(config_file_contents.read())

@@ -3,7 +3,9 @@
   Description: A CF stack to implement lambda_uptime
 
   Metadata:
-    CommitHash: TODO
+    CommitHash: {{ git['hash'] }}
+    CommitDescription: {{ git['message'] }}
+    AnyUnstagedChanges?: {{ git['unstaged'] }}
 
 
   Parameters:
