@@ -16,7 +16,9 @@ A collection of utilities for AWS CloudFormation & Lambda, implemented as Python
 
 This is all convention driven, based on filename: `config/foo.yaml` is injected into `cloudformation/foo.yaml.jinja`, as rendered out as `_output/foo.template`:
 
-    fab render validate
+```bash
+fab render validate
+```
 
 
 ### Local Configuration
@@ -27,8 +29,11 @@ This is all convention driven, based on filename: `config/foo.yaml` is injected 
 
 The `provision` Fabric task will create a CloudFormation stack with the given name, or update the existing stack if that name already exists. It makes sense to `render` and `validate` at the same time:
 
-    # Render a 'foo' stack template to JSON, and create a CloudFormation stack of that type
-    # with name 'my-foo-stack'.
-    fab render validate provision:template_name=foo,stack_name=my-foo-stack
+```bash
+# Render a 'foo' stack template to JSON, and create a CloudFormation stack of that type
+# with name 'my-foo-stack'.
+
+fab render validate provision:template_name=foo,stack_name=my-foo-stack
+```
 
 Note that the `stack_name` must be unique in your current CloudFormation account, or an update will result.
