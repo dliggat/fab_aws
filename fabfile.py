@@ -3,6 +3,7 @@ import glob
 import jinja2
 import json
 import os
+import pprint
 import subprocess
 import yaml
 
@@ -77,7 +78,7 @@ def load_config(optional=None):
             else:
                 config[basename] = data
             print(os.path.basename(config_file).split('.')[0])
-    logger.info('Loaded config: %s', config)
+    logger.info('Loaded config: %s', pprint.pprint(config))
     return config
 
 
@@ -159,7 +160,7 @@ def provision(template_name=None, stack_name=None):
             response = client.create_stack(StackName=stack_name,
                                            TemplateBody=output_contents.read(),
                                            Capabilities=['CAPABILITY_IAM'])
-        logger.info(response)
+        logger.info(json.dumps(response, indent=2))
 
 
 @task
