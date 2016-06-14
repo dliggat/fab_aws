@@ -2,7 +2,7 @@
 
 A collection of utilities for AWS CloudFormation & Lambda, implemented as Python Fabric tasks.
 
-## Install
+## 0) Install
 
 1. Set up a `virtualenv` (I recommend [`pyenv-virtualenv`](https://github.com/yyuu/pyenv-virtualenv), highly):
   * `pyenv virtualenv cf-toolkit`
@@ -10,7 +10,7 @@ A collection of utilities for AWS CloudFormation & Lambda, implemented as Python
   * `pip install -U -r requirements.txt`
 
 
-## Write CloudFormation in YAML
+## 1) Write CloudFormation in YAML
 JSON is awkward to write and read, and among its other deficiencies as a configuration file format, does not allow comments. So write in YAML, and use `cf-toolkit` to convert:
 
 ```yaml
@@ -57,7 +57,7 @@ Outputs:
 
 
 
-## Render CloudFormation JSON
+## 2) Render CloudFormation JSON
 
 `cf-toolkit` converts CloudFormation YAML from `cloudformation/` into JSON, and injects configuration state from `config/` along the way. Final output appears at `_output/`.
 
@@ -72,7 +72,7 @@ fab render validate
 
 `config/*.local.yaml` files are git-ignored. They are merged into the configuration with a higher priority than non-local configuration. This provides an easy way to inject secrets, and keep them out of the repo.
 
-## Provision AWS Resources
+## 3) Provision AWS Resources
 
 The `provision` Fabric task will create a CloudFormation stack with the given name, or update the existing stack if that name already exists. It makes sense to `render` and `validate` at the same time:
 
