@@ -11,7 +11,7 @@ Metadata:
 Parameters:
   ScheduleExpression:
     Type: String
-    Default: {{ uptime_monitor['schedule_expression'] }}
+    Default: {{ downtime_notifier['schedule_expression'] }}
     Description: How often to invoke the {{ this['name'] }} function
 
 
@@ -21,7 +21,7 @@ Resources:
   LambdaFunction:
     Type: AWS::Lambda::Function
     Metadata:
-      Comment: {{ uptime_monitor['description'] }}
+      Comment: {{ downtime_notifier['description'] }}
     DependsOn: [ LambdaFunctionExecutionRole ]
     Properties:
       Code:
@@ -31,10 +31,10 @@ Resources:
             - - "def handler(event, context):"
               - "    print('This is a no-op; will be overwritten later.')"
       Role: { "Fn::GetAtt": [ LambdaFunctionExecutionRole, Arn ] }
-      Timeout: {{ uptime_monitor['timeout'] }}
+      Timeout: {{ downtime_notifier['timeout'] }}
       Handler: index.handler
       Runtime: python2.7
-      MemorySize: {{ uptime_monitor['memory_size'] }}
+      MemorySize: {{ downtime_notifier['memory_size'] }}
 
 
   # The IAM role that the lambda function will execute under.

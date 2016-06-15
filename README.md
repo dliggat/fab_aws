@@ -27,7 +27,7 @@ Metadata:
 Parameters:
   ScheduleExpression:
     Type: String
-    Default: {{ uptime_monitor['schedule_expression'] }}
+    Default: {{ downtime_notifier['schedule_expression'] }}
     Description: How often to invoke the {{ this['name'] }} function
 
 
