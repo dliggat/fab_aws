@@ -83,4 +83,4 @@ The `provision` Fabric task will create a CloudFormation stack with the given na
 fab render validate provision:template_name=foo,stack_name=my-foo-stack
 ```
 
-Note that the `stack_name` must be unique in your current CloudFormation account, or an update will result.
+Note that the `stack_name` must be unique within your current set of CloudFormation stacks, or an update will result.
