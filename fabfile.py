@@ -1,4 +1,5 @@
 import boto3
+import datetime
 import glob
 import jinja2
 import json
@@ -16,6 +17,7 @@ logger = logging.getLogger()
 coloredlogs.install(level=logging.INFO)
 
 from fabric.api import task
+from fabric.operations import local
 from fabric.contrib.console import confirm
 from fabric.utils import abort
 
@@ -50,6 +52,12 @@ OUTPUT_FILES = glob.glob(os.path.join(OUTPUT_DIR, '*{0}'.format(OUTPUT_EXT)))
 # Ensure that .local.yaml config files are loaded last, so that they take precedence in the config dict.
 CONFIG_DIR   = os.path.join(ROOT_DIR, 'config')
 CONFIG_FILES = sorted(glob.glob(os.path.join(CONFIG_DIR, '*{0}'.format('.yaml'))), reverse=True)
+
+BUILDS_SUBDIR = '_builds'
+STAGING_SUBDIR = '_staging'
+LAMBDA_CONFIG_SUBDIR = 'lambda_config'
+CF_TOOLKIT_ROOT = os.path.dirname(__file__)
+
 
 def load_config(optional=None):
     """Load the config from the config directory into a deep dict, keyed by stack type.
@@ -168,3 +176,54 @@ def clean():
     """"Deletes all the rendered output files."""
     for f in OUTPUT_FILES:
         os.remove(f)
+
+
+@task
+def invoke(function_name=None):
+    """Invokes the given Lambda function."""
+    if not function_name:
+        abort('Must provide template')
+
+    output = local('python ./lambda/{0}/index.py'.format(function_name), capture=True)
+    logger.info(output)
+
+
+@task
+def build(function_name=None):
+    """Creates a deployable package for the given Lambda function."""
+    if not function_name:
+        abort('Must provide function_name')
+
+
+    lambda_root = os.path.join(CF_TOOLKIT_ROOT, 'lambda', function_name)
+    module_dir = os.path.join(lambda_root, function_name)
+    lambda_config_dir = os.path.join(lambda_root, LAMBDA_CONFIG_SUBDIR)
+    staging_dir = os.path.join(lambda_root, STAGING_SUBDIR)
+    builds_dir = os.path.join(lambda_root, BUILDS_SUBDIR)
+    build_filename = '{0}-{1}.zip'.format(
+        datetime.datetime.now().isoformat().replace(':', '.'), function_name)
+
+    # Erase previous runs of the build task.
+    local('rm -rf {0}'.format(staging_dir))
+
+    # Set up staging and builds directories.
+    local('mkdir -p {0}'.format(staging_dir))
+    local('mkdir -p {0}'.format(builds_dir))
+
+    # Install the lambda specific requirements.
+    local('pip install -r {0}/requirements.txt -t {1}'.format(lambda_root, staging_dir))
+
+    # Copy the top level *.py (e.g. index.py) and lambda_config dir into the staging_dir.
+    local('cp -R {0}/*.py {1}'.format(lambda_root, staging_dir))
+    local('cp -R {0} {1}'.format(lambda_config_dir, staging_dir))
+
+    # Copy the module directory into the staging dir.
+    local('cp -R {0} {1}'.format(module_dir, staging_dir))
+
+    # Zip the whole thing up, and move it to the builds dir.
+    local('cd {0}; zip -r {1} ./*; mv {1} {2}'.format(staging_dir, build_filename, builds_dir))
+
+
+
+
+

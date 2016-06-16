@@ -1,2 +1,4 @@
 _output/*.template
 config/*.local.yaml
+lambda/*/_staging
+lambda/*/_builds
