@@ -61,7 +61,7 @@ Outputs:
 
 `cf-toolkit` converts CloudFormation YAML from `cloudformation/` into JSON, and injects configuration state from `config/` along the way. Final output appears at `_output/`.
 
-This is all convention driven, based on filename: configuration from `config/foo.yaml` is injected into a CloudFormation-YAML template at `cloudformation/foo.yaml.jinja`, and rendered out as CloudFormation-JSON at `_output/foo.template`:
+This is all convention driven, based on filename: configuration from `config/downtime_notifier.yaml` is injected into a CloudFormation-YAML template at `cloudformation/downtime_notifier.yaml.jinja`, and rendered out as CloudFormation-JSON at `_output/downtime_notifier.template`:
 
 ```bash
 fab render validate
@@ -77,10 +77,21 @@ fab render validate
 The `provision` Fabric task will create a CloudFormation stack with the given name, or update the existing stack if that name already exists. It makes sense to `render` and `validate` at the same time:
 
 ```bash
-# Render a 'foo' stack template to JSON, and create a CloudFormation stack of that type
-# with name 'my-foo-stack'.
+# Render a 'downtime_notifier' stack template to JSON, and create a CloudFormation stack of that type
+# with name 'my-dn-stack'.
 
-fab render validate provision:template_name=foo,stack_name=my-foo-stack
+fab render validate provision:template_name=downtime_notifier,stack_name=my-dn-stack
 ```
 
 Note that the `stack_name` must be unique within your current set of CloudFormation stacks, or an update will result.
+
+
+## 3) Build Deployable Lambda Package
+
+```bash
+# Installs dependencies and builds a deployable zip file.
+# e.g. ./lambda/downtime_notifier/_builds/2016-06-15T17.22.40.467141-downtime_notifier.zip
+
+fab build:function_name=downtime_notifier
+```
+
