@@ -1,3 +1,4 @@
+*.pyc
 _output/*.template
 config/*.local.yaml
 lambda/*/_staging

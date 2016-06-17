@@ -190,7 +190,10 @@ def invoke(function_name=None):
 
 @task
 def build(function_name=None):
-    """Creates a deployable package for the given Lambda function."""
+    """Creates a deployable package for the given Lambda function.
+
+    build:function_name= (str): The Lambda function within the lambda/ directory to work on.
+    """
     if not function_name:
         abort('Must provide function_name')
 
