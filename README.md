@@ -27,7 +27,7 @@ Metadata:
 Parameters:
   ScheduleExpression:
     Type: String
-    Default: {{ downtime_notifier['schedule_expression'] }}
+    Default: {{ dn_stack['schedule_expression'] }}
     Description: How often to invoke the {{ this['name'] }} function
 
 
@@ -61,7 +61,7 @@ Outputs:
 
 `cf_toolkit` converts CloudFormation YAML from `cloudformation/` into JSON, and injects configuration state from `config/` along the way. Final output appears at `_output/`.
 
-This is all convention driven, based on filename: configuration from `config/downtime_notifier.yaml` is injected into a CloudFormation-YAML template at `cloudformation/downtime_notifier.yaml.jinja`, and rendered out as CloudFormation-JSON at `_output/downtime_notifier.template`:
+This is all convention driven, based on filename: configuration from `config/dn_stack.yaml` is injected into a CloudFormation-YAML template at `cloudformation/dn_stack.yaml.jinja`, and rendered out as CloudFormation-JSON at `_output/dn_stack.template`:
 
 ```bash
 fab render validate
@@ -77,10 +77,10 @@ fab render validate
 The `provision` Fabric task will create a CloudFormation stack with the given name, or update the existing stack if that name already exists. It makes sense to `render` and `validate` at the same time:
 
 ```bash
-# Render a 'downtime_notifier' stack template to JSON, and create a CloudFormation stack of that type
+# Render a 'dn_stack' stack template to JSON, and create a CloudFormation stack of that type
 # with name 'my-dn-stack'.
 
-fab render validate provision:template_name=downtime_notifier,stack_name=my-dn-stack
+fab render validate provision:template_name=dn_stack,stack_name=my-dn-stack
 ```
 
 Note that the `stack_name` must be unique within your current set of CloudFormation stacks, or an update will result.
@@ -90,8 +90,8 @@ Note that the `stack_name` must be unique within your current set of CloudFormat
 
 ```bash
 # Installs dependencies and builds a deployable zip file.
-# e.g. ./lambda/downtime_notifier/_builds/2016-06-15T17.22.40.467141-downtime_notifier.zip
+# e.g. ./lambda/dn_stack/_builds/2016-06-15T17.22.40.467141-dn_stack.zip
 
-fab build:function_name=downtime_notifier
+fab build:function_name=dn_stack
 ```
 

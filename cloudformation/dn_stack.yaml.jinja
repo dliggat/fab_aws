@@ -11,7 +11,7 @@ Metadata:
 Parameters:
   ScheduleExpression:
     Type: String
-    Default: {{ downtime_notifier['schedule_expression'] }}
+    Default: {{ dn_stack['schedule_expression'] }}
     Description: How often to invoke the {{ this['name'] }} function
 
 
@@ -21,7 +21,7 @@ Resources:
   LambdaFunction:
     Type: AWS::Lambda::Function
     Metadata:
-      Comment: {{ downtime_notifier['description'] }}
+      Comment: {{ dn_stack['description'] }}
     DependsOn: [ LambdaFunctionExecutionRole ]
     Properties:
       Code:
@@ -31,10 +31,10 @@ Resources:
             - - "def handler(event, context):"
               - "    print('This is a no-op; will be overwritten later.')"
       Role: { "Fn::GetAtt": [ LambdaFunctionExecutionRole, Arn ] }
-      Timeout: {{ downtime_notifier['timeout'] }}
+      Timeout: {{ dn_stack['timeout'] }}
       Handler: index.handler
       Runtime: python2.7
-      MemorySize: {{ downtime_notifier['memory_size'] }}
+      MemorySize: {{ dn_stack['memory_size'] }}
 
 
   # The IAM role that the lambda function will execute under.
@@ -102,6 +102,14 @@ Resources:
     Type: AWS::SNS::Topic
     Properties:
       DisplayName: {{ this['name'] }}Topic
+      {% for sub in dn_stack.get('subscriptions', []) %}
+      {% if loop.first %}
+      Subscription:
+      {% endif %}
+        - Endpoint: {{ sub['endpoint'] }}
+          Protocol: {{ sub['protocol'] }}
+      {% endfor %}
+
 
 
 Outputs:
