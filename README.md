@@ -1,17 +1,17 @@
-# cf-toolkit
+# cf_toolkit
 
 A collection of utilities for AWS CloudFormation & Lambda, implemented as Python Fabric tasks.
 
 ## 0) Install
 
 1. Set up a `virtualenv` (I recommend [`pyenv-virtualenv`](https://github.com/yyuu/pyenv-virtualenv), highly):
-  * `pyenv virtualenv cf-toolkit`
+  * `pyenv virtualenv cf_toolkit`
 2. Install dependencies:
   * `pip install -U -r requirements.txt`
 
 
 ## 1) Write CloudFormation in YAML
-JSON is awkward to write and read, and among its other deficiencies as a configuration file format, does not allow comments. So write in YAML, and use `cf-toolkit` to convert:
+JSON is awkward to write and read, and among its other deficiencies as a configuration file format, does not allow comments. So write in YAML, and use `cf_toolkit` to convert:
 
 ```yaml
 AWSTemplateFormatVersion: "2010-09-09"
@@ -59,7 +59,7 @@ Outputs:
 
 ## 2) Render CloudFormation JSON
 
-`cf-toolkit` converts CloudFormation YAML from `cloudformation/` into JSON, and injects configuration state from `config/` along the way. Final output appears at `_output/`.
+`cf_toolkit` converts CloudFormation YAML from `cloudformation/` into JSON, and injects configuration state from `config/` along the way. Final output appears at `_output/`.
 
 This is all convention driven, based on filename: configuration from `config/downtime_notifier.yaml` is injected into a CloudFormation-YAML template at `cloudformation/downtime_notifier.yaml.jinja`, and rendered out as CloudFormation-JSON at `_output/downtime_notifier.template`:
 
