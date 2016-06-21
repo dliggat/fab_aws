@@ -6,7 +6,7 @@ Description: A {{ this['name'] }} implementation.
 Metadata:
   CommitHash: {{ git['hash'] }}
   CommitDescription: {{ git['message'] }}
-  AnyCommittedChanges?: {{ git['uncommitted'] }}
+  AnyUncommittedChanges?: {{ git['uncommitted'] }}
 
 
 Parameters:
