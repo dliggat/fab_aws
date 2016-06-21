@@ -59,18 +59,18 @@ Outputs:
 
 ## 2) Render CloudFormation JSON
 
-`cf_toolkit` converts CloudFormation YAML from `cloudformation/` into JSON, and injects configuration state from `config/` along the way. Final output appears at `_output/`.
+`cf_toolkit` converts CloudFormation YAML from `cloudformation/` into JSON, and injects configuration state from `cloudformation_config/` along the way. Final output appears at `_output/`.
 
-This is all convention driven, based on filename: configuration from `config/dn_stack.yaml` is injected into a CloudFormation-YAML template at `cloudformation/dn_stack.yaml.jinja`, and rendered out as CloudFormation-JSON at `_output/dn_stack.template`:
+This is all convention driven, based on filename: configuration from `cloudformation_config/dn_stack.yaml` is injected into a CloudFormation-YAML template at `cloudformation/dn_stack.yaml.jinja`, and rendered out as CloudFormation-JSON at `_output/dn_stack.template`:
 
 ```bash
 fab render validate
 ```
 
 
-### Local Configuration
+### Local CloudFormation Configuration
 
-`config/*.local.yaml` files are git-ignored. They are merged into the configuration with a higher priority than non-local configuration. This provides an easy way to inject secrets, and keep them out of the repo.
+`cloudformation_config/*.local.yaml` files are git-ignored. They are merged into the configuration with a higher priority than non-local configuration. This provides an easy way to inject secrets, and keep them out of the repo.
 
 ## 3) Provision AWS Resources
 

@@ -50,7 +50,7 @@ OUTPUT_EXT   = '.template'
 OUTPUT_FILES = glob.glob(os.path.join(OUTPUT_DIR, '*{0}'.format(OUTPUT_EXT)))
 
 # Ensure that .local.yaml config files are loaded last, so that they take precedence in the config dict.
-CONFIG_DIR   = os.path.join(ROOT_DIR, 'config')
+CONFIG_DIR   = os.path.join(ROOT_DIR, 'cloudformation_config')
 CONFIG_FILES = sorted(glob.glob(os.path.join(CONFIG_DIR, '*{0}'.format('.yaml'))), reverse=True)
 
 BUILDS_SUBDIR = '_builds'
