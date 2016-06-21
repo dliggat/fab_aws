@@ -8,7 +8,7 @@ import pprint
 import subprocess
 import yaml
 
-from collections import OrderedDict as odict
+from collections import OrderedDict
 from botocore.exceptions import ClientError, ValidationError
 
 import logging; logging.basicConfig()
@@ -27,10 +27,10 @@ from fabric.utils import abort
 def construct_ordered_mapping(loader, node, deep=False):
     if isinstance(node, yaml.MappingNode):
         loader.flatten_mapping(node)
-    return odict(loader.construct_pairs(node, deep))
+    return OrderedDict(loader.construct_pairs(node, deep))
 
 def construct_yaml_ordered_map(loader, node, deep=False):
-    data = odict()
+    data = OrderedDict()
     yield data
     value = construct_ordered_mapping(loader, node, deep)
     data.update(value)
@@ -69,7 +69,7 @@ def load_config(optional=None):
                'git': {
                         'hash':    subprocess.check_output(['git', 'rev-parse', 'HEAD'])[:-1],
                         'message': subprocess.check_output(['git', 'log', '-1', '--pretty=%B']).strip().replace('"', ''),
-                        'unstaged': True if subprocess.call('git diff-index --quiet HEAD --'.split(' ')) else False
+                        'uncommitted': True if subprocess.call('git diff-index --quiet HEAD --'.split(' ')) else False
                       }
              }
     if optional:
@@ -85,7 +85,20 @@ def load_config(optional=None):
                 config[basename].update(data)
             else:
                 config[basename] = data
-            print(os.path.basename(config_file).split('.')[0])
+
+    for (basename, config_item) in config.iteritems():
+        if basename == 'git':
+            continue
+        if not config_item.has_key('parameters'):
+            config_item['parameters'] = OrderedDict()
+
+        # Handle the parameters. TODO: decryption happens here, possibly.
+        config_item['parameters'] = [
+            {'ParameterKey': k,
+             'ParameterValue': v,
+             'UsePreviousValue': False} for (k,v) in config_item['parameters'].items()]
+
+
     logger.info('Loaded config: %s', pprint.pprint(config))
     return config
 
@@ -147,6 +160,8 @@ def provision(template_name=None, stack_name=None):
         abort('Must provide stack_name')
     client = boto3.client('cloudformation')
 
+    config = load_config()
+
     update = False
     try:
         resp = client.describe_stacks(StackName=stack_name)
@@ -163,10 +178,12 @@ def provision(template_name=None, stack_name=None):
         if update:
             response = client.update_stack(StackName=stack_name,
                                            TemplateBody=output_contents.read(),
+                                           Parameters=config[template_name]['parameters'],
                                            Capabilities=['CAPABILITY_IAM'])
         else:
             response = client.create_stack(StackName=stack_name,
                                            TemplateBody=output_contents.read(),
+                                           Parameters=config[template_name]['parameters'],
                                            Capabilities=['CAPABILITY_IAM'])
         logger.info(json.dumps(response, indent=2))
 

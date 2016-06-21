@@ -6,7 +6,7 @@ Description: A {{ this['name'] }} implementation.
 Metadata:
   CommitHash: {{ git['hash'] }}
   CommitDescription: {{ git['message'] }}
-  AnyUnstagedChanges?: {{ git['unstaged'] }}
+  AnyCommittedChanges?: {{ git['uncommitted'] }}
 
 
 Parameters:
@@ -120,5 +120,7 @@ Outputs:
     Value: { "Fn::GetAtt": [ LambdaFunction, Arn ] }
   LambdaFunctionExecutionRole:
     Value: { Ref : LambdaFunctionExecutionRole }
+  LambdaFunctionExecutionRoleARN:
+    Value: { "Fn::GetAtt": [ LambdaFunctionExecutionRole, Arn ] }
   SnsTopic:
     Value: { Ref : NotificationTopic }

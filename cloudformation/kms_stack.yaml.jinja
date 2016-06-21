@@ -5,7 +5,26 @@ Description: A {{ this['name'] }} implementation.
 Metadata:
   CommitHash: {{ git['hash'] }}
   CommitDescription: {{ git['message'] }}
-  AnyUnstagedChanges?: {{ git['unstaged'] }}
+  AnyCommittedChanges?: {{ git['uncommitted'] }}
+
+{% set RolePermitCount = 4 %}
+
+Parameters:
+  {% for i in range(RolePermitCount) %}
+  PermitDecryptionByRoleArn{{ i }}:
+    Type: String
+    Default: ""
+    Description: An optional ARN of a role that may decrypt using this key
+  {% endfor %}
+
+
+Conditions:
+  {% for i in range(RolePermitCount) %}
+  NoPermitDecryptionByRoleArn{{ i }}:
+    "Fn::Equals":
+      - { Ref: PermitDecryptionByRoleArn{{ i }} }
+      - ""
+  {% endfor %}
 
 
 Resources:
@@ -15,7 +34,7 @@ Resources:
       Description: A key for encrypting configuration items for cf_toolkit
       KeyPolicy:
         Version: "2012-10-17"
-        Id: key-policy
+        Id: configuration-key-policy
         Statement:
           - Sid: Allow administration, encrypting, decrypting by all entities in this AWS account.
             Effect: Allow
@@ -37,6 +56,18 @@ Resources:
               - "kms:ScheduleKeyDeletion"
               - "kms:CancelKeyDeletion"
             Resource: "*"
+          {% for i in range(RolePermitCount) %}
+          - "Fn::If":
+            - NoPermitDecryptionByRoleArn{{ i }}
+            - Ref: AWS::NoValue
+            - Sid: Allow decryption by this IAM role ARN
+              Effect: Allow
+              Principal:
+                AWS: { Ref: PermitDecryptionByRoleArn{{ i }} }
+              Action:
+                "kms:Decrypt*"
+          {% endfor %}
+
 
 
 Outputs:

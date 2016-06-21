@@ -21,7 +21,7 @@ Description: A CF stack to implement {{ this['name'] }}.
 Metadata:
   CommitHash: {{ git['hash'] }}
   CommitDescription: {{ git['message'] }}
-  AnyUnstagedChanges?: {{ git['unstaged'] }}
+  AnyCommittedChanges?: {{ git['uncommitted'] }}
 
 
 Parameters:
