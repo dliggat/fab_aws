@@ -178,12 +178,12 @@ def provision(template_name=None, stack_name=None):
         if update:
             response = client.update_stack(StackName=stack_name,
                                            TemplateBody=output_contents.read(),
-                                           Parameters=config[template_name]['parameters'],
+                                           Parameters=config.get(template_name, {}).get('parameters', []),
                                            Capabilities=['CAPABILITY_IAM'])
         else:
             response = client.create_stack(StackName=stack_name,
                                            TemplateBody=output_contents.read(),
-                                           Parameters=config[template_name]['parameters'],
+                                           Parameters=config.get(template_name, {}).get('parameters', []),
                                            Capabilities=['CAPABILITY_IAM'])
         logger.info(json.dumps(response, indent=2))
 
@@ -201,7 +201,7 @@ def invoke(function_name=None):
     if not function_name:
         abort('Must provide template')
 
-    output = local('python ./lambda/{0}/index.py'.format(function_name), capture=True)
+    output = local('python ./lambda/{0}/index.py 2>&1'.format(function_name), capture=True)
     logger.info(output)
 
 

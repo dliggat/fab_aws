@@ -1,4 +1,6 @@
 import boto3
+import datetime
+import pprint
 
 from downtime_notifier import configuration
 
@@ -6,18 +8,14 @@ from downtime_notifier import configuration
 def handler(event, context):
 
     print (context)
-    print(configuration())
     c = configuration()
 
     client = boto3.client('sns')
-
-
     response = client.publish(
-    TopicArn=c['env']['topic_arn'],
-    Message='Hello this is a message',
-    Subject=c['env']['subject'],
-    MessageStructure='string'
-    )
+        TopicArn=c['env']['topic_arn'],
+        Message='Hello this is a message',
+        Subject=c['env']['subject'] + ' ' + str(datetime.datetime.now()),
+        MessageStructure='string')
     print(response)
 
 

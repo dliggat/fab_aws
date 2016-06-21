@@ -65,7 +65,8 @@ Resources:
               Principal:
                 AWS: { Ref: PermitDecryptionByRoleArn{{ i }} }
               Action:
-                "kms:Decrypt*"
+                - "kms:Decrypt*"
+              Resource: "*"
           {% endfor %}
 
 
