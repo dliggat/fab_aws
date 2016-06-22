@@ -1,6 +1,6 @@
 # cf_toolkit
 
-A convention-driven collection of utilities for AWS CloudFormation & Lambda, implemented as Python Fabric tasks.
+A convention-driven collection of utilities for AWS CloudFormation & Lambda, implemented as Python Fabric tasks. As an initial proof-of-concept, the elements herein implement a **downtime-notifier** system for websites; i.e. a Lambda function that periodically opens a HTTP connection to each of a set of websites, and posts to a SNS topic in the event of a failure.
 
 ## Directory Structure
 
@@ -36,7 +36,11 @@ A convention-driven collection of utilities for AWS CloudFormation & Lambda, imp
 3. From this point forward, the `fab` command will be available to run the tasks from `fabfile.py`.
 
 
-## 1) Write CloudFormation in YAML
+## 1) Configure AWS Credentials
+`cf_toolkit` uses the `boto3` Python AWS SDK. When the Fabric tasks are run, the AWS credentials are inherited from the containing shell. For most AWS users, this probably means that you have one or more AWS profiles configured, and a particular one either enabled or set to the default. As I interact with numerous profiles on a daily basis, I used [named profiles](https://liggat.org/juggling-multiple-aws-profiles/) to handle this. If you do not have profiles set up, [this article](http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html) in the AWS documentation explains the configuration, as well as the other precedence-based options that exist for authentication.
+
+
+## 2) Write CloudFormation in YAML
 JSON is awkward to write and read, and among its other deficiencies as a configuration file format, does not allow comments. So write in YAML, and use `fab render` to convert.
 
 ```yaml
@@ -84,7 +88,7 @@ Outputs:
 
 
 
-## 2) Render CloudFormation JSON
+## 3) Render CloudFormation JSON
 
 `cf_toolkit` converts CloudFormation YAML from `cloudformation/` into JSON, and injects configuration state from `cloudformation_config/` along the way. Final output appears at `_output/`.
 
@@ -101,7 +105,7 @@ fab render validate
 `cloudformation_config/*.local.yaml` files are git-ignored. They are merged into the configuration with a higher priority than non-local configuration. This provides an easy way to inject secrets, and keep them out of the repo.
 
 
-## 3) Provision AWS Resources
+## 4) Provision AWS Resources
 
 The `provision` Fabric task will create a CloudFormation stack with the given name, or update the existing stack if that name already exists. It makes sense to `render` and `validate` at the same time:
 
@@ -115,7 +119,7 @@ fab render validate provision:template_name=dn_stack,stack_name=my-dn-stack
 Note that the `stack_name` must be unique within your current set of CloudFormation stacks, or an update will result.
 
 
-## 4) Create and maintain Lambda code
+## 5) Create and maintain Lambda code
 
 `cf_toolkit` specifies a particular directory structure for Lambda functions. Adhering to this structure allows for very convenient code organization, package builds, and deployment to a live Lambda function ARN.
 
@@ -137,13 +141,16 @@ lambda/downtime_notifier                   # Root directory for the function ele
 └── requirements.txt                       # Lambda-function specific dependencies to install.
 ```
 
+### Lambda Configuration
+The `lambda_config` directory is a location to place YAML files that can be deserialized by `config.py` within the Lambda runtime.
+
 ### Local Lambda Configuration
 As above, `.local.yaml` files in `lambda_config` are git-ignored.
 
 ### Decrypting KMS secrets
-Alternatively, one
+Configuration keys with an `encrypted_` prefix are assumed to be encrypted by KMS. `config.py` will attempt to decrypt these first. To ensure this is possible, the Lambda role under which this function runs should have the `Decrypt:*` privilege specified in the key policy.
 
-## 5) Build Deployable Lambda Package
+## 6) Build Deployable Lambda Package
 
 ```bash
 # Installs dependencies and builds a deployable zip file.
@@ -152,7 +159,7 @@ Alternatively, one
 fab build:function_name=downtime_notifier
 ```
 
-## 6) Deploy Lambda Package
+## 7) Deploy Lambda Package
 
 TODO
 

@@ -1,4 +1,4 @@
 description: A function to monitor websites, and alert on unavailability
-schedule_expression: rate(1 hour)
+schedule_expression: rate(12 hours)
 memory_size: 256
 timeout: 180
