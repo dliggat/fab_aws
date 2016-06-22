@@ -37,7 +37,7 @@ A convention-driven collection of utilities for AWS CloudFormation & Lambda, imp
 
 
 ## 1) Configure AWS Credentials
-`cf_toolkit` uses the `boto3` Python AWS SDK. When the Fabric tasks are run, the AWS credentials are inherited from the containing shell. For most AWS users, this probably means that you have one or more AWS profiles configured, and a particular one either enabled or set to the default. As I interact with numerous profiles on a daily basis, I used [named profiles](https://liggat.org/juggling-multiple-aws-profiles/) to handle this. If you do not have profiles set up, [this article](http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html) in the AWS documentation explains the configuration, as well as the other precedence-based options that exist for authentication.
+`cf_toolkit` uses the `boto3` Python AWS SDK. When the Fabric tasks are run, the **AWS credentials are inherited from the containing shell**. For most AWS users, this probably means that you have one or more AWS profiles configured, and a particular one either enabled or set to the default. As I interact with numerous profiles on a daily basis, I used [named profiles](https://liggat.org/juggling-multiple-aws-profiles/) to handle this. If you do not have profiles set up, [this article](http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html) in the AWS documentation explains the configuration, as well as the other precedence-based options that exist for authentication.
 
 
 ## 2) Write CloudFormation in YAML
@@ -113,7 +113,9 @@ The `provision` Fabric task will create a CloudFormation stack with the given na
 # Render a 'dn_stack' stack template to JSON, and create a CloudFormation stack of that type
 # with name 'my-dn-stack'.
 
-fab render validate provision:template_name=dn_stack,stack_name=my-dn-stack
+TEMPLATE=dn_stack
+STACK_ID=my-dn-stack
+fab render validate provision:template_name=$TEMPLATE,stack_name=$STACK_ID
 ```
 
 Note that the `stack_name` must be unique within your current set of CloudFormation stacks, or an update will result.
@@ -156,7 +158,8 @@ Configuration keys with an `encrypted_` prefix are assumed to be encrypted by KM
 # Installs dependencies and builds a deployable zip file.
 # e.g. ./lambda/dn_stack/_builds/2016-06-15T17.22.40.467141-dn.zip
 
-fab build:function_name=downtime_notifier
+FUNCTION=downtime_notifier
+fab build:function_name=$FUNCTION
 ```
 
 ## 7) Deploy Lambda Package
