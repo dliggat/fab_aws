@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
-Description: A {{ this['name'] }} implementation.
+Description: A {{ __name__ }} implementation.
 
 
 Metadata:
@@ -13,7 +13,7 @@ Parameters:
   ScheduleExpression:
     Type: String
     Default: {{ dn_stack['schedule_expression'] }}
-    Description: How often to invoke the {{ this['name'] }} function
+    Description: How often to invoke the {{ __name__ }} function
 
 
 Resources:
@@ -102,7 +102,7 @@ Resources:
   NotificationTopic:
     Type: AWS::SNS::Topic
     Properties:
-      DisplayName: {{ this['name'] }}Topic
+      DisplayName: {{ __name__ }}Topic
       {% for sub in dn_stack.get('subscriptions', []) %}
       {% if loop.first %}
       Subscription:

@@ -47,7 +47,7 @@ JSON is awkward to write and read, and among its other deficiencies as a configu
 # cloudformation/dn_stack.yaml.jinja
 AWSTemplateFormatVersion: "2010-09-09"
 
-Description: A CF stack to implement {{ this['name'] }}.
+Description: A CF stack to implement {{ __name__ }}.
 
 Metadata:
   CommitHash: {{ git['hash'] }}
@@ -59,7 +59,7 @@ Parameters:
   ScheduleExpression:
     Type: String
     Default: {{ dn_stack['schedule_expression'] }}
-    Description: How often to invoke the {{ this['name'] }} function
+    Description: How often to invoke the {{ __name__ }} function
 
 
 Resources:
@@ -79,7 +79,7 @@ Resources:
   NotificationTopic:
     Type: AWS::SNS::Topic
     Properties:
-      DisplayName: {{ this['name'] }}Topic
+      DisplayName: {{ __name__ }}Topic
 
 Outputs:
   SnsTopic:

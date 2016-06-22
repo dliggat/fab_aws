@@ -59,21 +59,12 @@ LAMBDA_CONFIG_SUBDIR = 'lambda_config'
 CF_TOOLKIT_ROOT = os.path.dirname(__file__)
 
 
-def load_config(optional=None):
-    """Load the config from the config directory into a deep dict, keyed by stack type.
-
-    Args:
-      optional (dict): An optional supplied hash to merge into the config object.
-    """
-    config = {
-               'git': {
-                        'hash':    subprocess.check_output(['git', 'rev-parse', 'HEAD'])[:-1],
-                        'message': subprocess.check_output(['git', 'log', '-1', '--pretty=%B']).strip().replace('"', ''),
-                        'uncommitted': True if subprocess.call('git diff-index --quiet HEAD --'.split(' ')) else False
-                      }
+def load_config():
+    """Load the config from the config directory into a deep dict, keyed by stack type."""
+    config = {'git': {'hash': subprocess.check_output(['git', 'rev-parse', 'HEAD'])[:-1],
+                      'message': subprocess.check_output(['git', 'log', '-1', '--pretty=%B']).strip().replace('"', ''),
+                      'uncommitted': True if subprocess.call('git diff-index --quiet HEAD --'.split(' ')) else False }
              }
-    if optional:
-        config.update(optional)
 
     for config_file in CONFIG_FILES:
         with open(config_file, 'r') as config_file_contents:
@@ -122,7 +113,8 @@ def render():
     for input_file in INPUT_FILES:
         basename = os.path.basename(input_file).split('.')[0]
         template = env.get_template('{0}{1}'.format(basename, INPUT_EXT))
-        config   = load_config({ 'this': { 'name': basename } })
+        config   = load_config()
+        config.update({'__name__': basename})
         rendered = template.render(**config)
         data = yaml.load(rendered)
 
