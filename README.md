@@ -2,6 +2,31 @@
 
 A convention-driven collection of utilities for AWS CloudFormation & Lambda, implemented as Python Fabric tasks.
 
+## Directory Structure
+
+`cf_toolkit` uses the following basic structure:
+
+```bash
+.
+├── README.md
+├── _output                   # Output location for rendered CloudFormation JSON.
+│   ├── dn_stack.template
+│   └── kms_stack.template
+├── cloudformation            # YAML representation of CloudFormation. Each file => 1 CF stack.
+│   ├── dn_stack.yaml.jinja
+│   └── kms_stack.yaml.jinja
+├── cloudformation_config     # Configuration to be injected; .local.yaml files are gitignored.
+│   ├── dn_stack.local.yaml
+│   ├── dn_stack.yaml
+│   └── kms_stack.local.yaml
+├── fabfile.py                # Contains task definitions. To run: `fab $TASK_NAME`.
+├── lambda                    # Root directory for Lambda functions. See below.
+│   └── downtime_notifier/
+│   └── other_function1/
+│   └── other_function2/
+└── requirements.txt          # Dependencies for cf_toolkit. Install locally using pip.
+```
+
 ## 0) Install
 
 1. Set up a `virtualenv` (I recommend [`pyenv-virtualenv`](https://github.com/yyuu/pyenv-virtualenv), highly):
@@ -75,6 +100,7 @@ fab render validate
 
 `cloudformation_config/*.local.yaml` files are git-ignored. They are merged into the configuration with a higher priority than non-local configuration. This provides an easy way to inject secrets, and keep them out of the repo.
 
+
 ## 3) Provision AWS Resources
 
 The `provision` Fabric task will create a CloudFormation stack with the given name, or update the existing stack if that name already exists. It makes sense to `render` and `validate` at the same time:
@@ -89,7 +115,7 @@ fab render validate provision:template_name=dn_stack,stack_name=my-dn-stack
 Note that the `stack_name` must be unique within your current set of CloudFormation stacks, or an update will result.
 
 
-## 3) Create and maintain Lambda code
+## 4) Create and maintain Lambda code
 
 `cf_toolkit` specifies a particular directory structure for Lambda functions. Adhering to this structure allows for very convenient code organization, package builds, and deployment to a live Lambda function ARN.
 
@@ -117,7 +143,7 @@ As above, `.local.yaml` files in `lambda_config` are git-ignored.
 ### Decrypting KMS secrets
 Alternatively, one
 
-## 4) Build Deployable Lambda Package
+## 5) Build Deployable Lambda Package
 
 ```bash
 # Installs dependencies and builds a deployable zip file.
@@ -126,7 +152,7 @@ Alternatively, one
 fab build:function_name=downtime_notifier
 ```
 
-## 5) Deploy
+## 6) Deploy Lambda Package
 
 TODO
 
