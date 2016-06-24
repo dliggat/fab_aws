@@ -1,5 +1,5 @@
 *.pyc
 _output/*.template
-config/*.local.yaml
+*.local.yaml
 lambda/*/_staging
 lambda/*/_builds
