@@ -102,7 +102,7 @@ Resources:
   NotificationTopic:
     Type: AWS::SNS::Topic
     Properties:
-      DisplayName: {{ __name__ }}Topic
+      DisplayName: {{ dn_stack['display_name'] }}
       {% for sub in dn_stack.get('subscriptions', []) %}
       {% if loop.first %}
       Subscription:

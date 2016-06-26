@@ -10,10 +10,8 @@ CONFIG_EXT = '*.yaml'
 CONFIG_FILES = sorted(glob.glob(os.path.join(CONFIG_DIR, CONFIG_EXT)), reverse=True)
 
 def configuration():
-    print(CONFIG_DIR)
-
+    """Load configuration from config files, with .local.yaml files overriding non-local."""
     config = {}
-    # Load configuration from config files, with .local.yaml files overriding non-local.
     for config_file in CONFIG_FILES:
         with open(config_file, 'r') as config_file_contents:
             data = yaml.load(config_file_contents.read())

@@ -1,9 +1,11 @@
 from utility import Utility
 
 class LocalContext(object):
+    """A simulated context object for local execution of Lambda functions."""
+
     @property
     def invoked_function_arn(self):
-        """Simulate the Lambda ARN that comes into the context object. """
+        """Simulate the Lambda ARN that comes into the context object."""
         return 'arn:aws:lambda:{0}:{1}:function:func-name'.format(
             'us-west-2', Utility.aws_account_id())
 

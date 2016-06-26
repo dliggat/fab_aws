@@ -53,18 +53,19 @@ OUTPUT_FILES = glob.glob(os.path.join(OUTPUT_DIR, '*{0}'.format(OUTPUT_EXT)))
 CONFIG_DIR   = os.path.join(ROOT_DIR, 'cloudformation_config')
 CONFIG_FILES = sorted(glob.glob(os.path.join(CONFIG_DIR, '*{0}'.format('.yaml'))), reverse=True)
 
+LAMBDA_DIR = os.path.join(ROOT_DIR, 'lambda')
 BUILDS_SUBDIR = '_builds'
 STAGING_SUBDIR = '_staging'
 LAMBDA_CONFIG_SUBDIR = 'lambda_config'
-CF_TOOLKIT_ROOT = os.path.dirname(__file__)
 
 
 def load_config():
     """Load the config from the config directory into a deep dict, keyed by stack type."""
     config = {'git': {'hash': subprocess.check_output(['git', 'rev-parse', 'HEAD'])[:-1],
-                      'message': subprocess.check_output(['git', 'log', '-1', '--pretty=%B']).strip().replace('"', ''),
-                      'uncommitted': True if subprocess.call('git diff-index --quiet HEAD --'.split(' ')) else False }
-             }
+                      'message': subprocess.check_output([
+                          'git', 'log', '-1', '--pretty=%B']).strip().replace('"', ''),
+                      'uncommitted': True if subprocess.call(
+                          'git diff-index --quiet HEAD --'.split(' ')) else False }}
 
     for config_file in CONFIG_FILES:
         with open(config_file, 'r') as config_file_contents:
@@ -83,7 +84,7 @@ def load_config():
         if not config_item.has_key('parameters'):
             config_item['parameters'] = OrderedDict()
 
-        # Handle the parameters. TODO: decryption happens here, possibly.
+        # Coalesce the parameters into the format expected by boto3.client('cloudformation').
         config_item['parameters'] = [
             {'ParameterKey': k,
              'ParameterValue': v,
@@ -143,8 +144,8 @@ def provision(template_name=None, stack_name=None):
     """Creates or updates a CloudFormation stack based on the supplied template type name.
 
     Args:
-        template_name (str): The name of the template from the input directory.
-        stack_name (str): The stack name to use for CloudFormation.
+        template_name: (str) The name of the template from the input directory.
+        stack_name: (str) The stack name to use for CloudFormation.
     """
     if not template_name:
         abort('Must provide template')
@@ -182,32 +183,53 @@ def provision(template_name=None, stack_name=None):
 
 @task
 def clean():
-    """"Deletes all the rendered output files."""
+    """"Deletes all the rendered _output CloudFormation files."""
     for f in OUTPUT_FILES:
         os.remove(f)
 
 
 @task
-def invoke(function_name=None):
-    """Invokes the given Lambda function."""
-    if not function_name:
-        abort('Must provide template')
+def install_reqs(function_name=None):
+    """Installs requirements.txt dependencies for the given Lambda function.
 
-    output = local('python ./lambda/{0}/index.py 2>&1'.format(function_name), capture=True)
+    Args:
+        function_name: (str) The Lambda function within the lambda/ directory to work on.
+    """
+    if not function_name:
+        abort('Must provide function_name')
+
+    requirements_file = os.path.join(LAMBDA_DIR, function_name, 'requirements.txt')
+    output = local('pip install -U -r {0} 2>&1'.format(requirements_file), capture=True)
+    logger.info(output)
+
+
+@task
+def invoke(function_name=None):
+    """Invokes the given Lambda function.
+
+    Args:
+        function_name: (str) The Lambda function within the lambda/ directory to work on.
+    """
+    if not function_name:
+        abort('Must provide function_name')
+
+    index_file = os.path.join(LAMBDA_DIR, function_name, 'index.py')
+    output = local('python {0} 2>&1'.format(index_file), capture=True)
     logger.info(output)
 
 
 @task
 def build(function_name=None):
-    """Creates a deployable package for the given Lambda function.
+    """Creates a deployable package for the given Lambda function in its _builds/ directory.
 
-    build:function_name= (str): The Lambda function within the lambda/ directory to work on.
+    Args:
+        function_name: (str) The Lambda function within the lambda/ directory to work on.
     """
     if not function_name:
         abort('Must provide function_name')
 
 
-    lambda_root = os.path.join(CF_TOOLKIT_ROOT, 'lambda', function_name)
+    lambda_root = os.path.join(LAMBDA_DIR, function_name)
     module_dir = os.path.join(lambda_root, function_name)
     lambda_config_dir = os.path.join(lambda_root, LAMBDA_CONFIG_SUBDIR)
     staging_dir = os.path.join(lambda_root, STAGING_SUBDIR)

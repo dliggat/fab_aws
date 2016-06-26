@@ -30,7 +30,7 @@ def notify(checkers):
     """Craft a message about the site downtime, and publish to the SNS topic.
 
     Args:
-        checkers (list): Sites which failed the check.
+        checkers: (list) Sites which failed the check.
     """
     subject = "{0} {1}".format(CONFIG['env']['subject_prefix'],
                                ', '.join([r.name for r in checkers]))

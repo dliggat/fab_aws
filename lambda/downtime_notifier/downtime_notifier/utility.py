@@ -2,6 +2,7 @@ import boto3
 
 
 class Utility(object):
+    """Container class for utility functions."""
 
     _aws_account_id = None
 

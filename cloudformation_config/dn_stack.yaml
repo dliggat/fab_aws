@@ -1,3 +1,4 @@
+display_name: Downtime Notifier Bot
 description: A function to monitor websites, and alert on unavailability
 schedule_expression: rate(5 minutes)
 memory_size: 256
