@@ -1,6 +1,6 @@
 # fab_aws
 
-A convention-driven collection of utilities for AWS CloudFormation & Lambda, implemented as Python Fabric tasks. As an initial proof-of-concept, the elements herein implement a **downtime-notifier** system for websites; i.e. a Lambda function that periodically opens a HTTP connection to each of a set of websites, and posts to a SNS topic in the event of a failure.
+A convention-driven collection of utilities for AWS CloudFormation & Lambda, implemented as Python Fabric tasks. As an initial proof-of-concept, the elements herein implement a **downtime-notifier** system for websites; i.e. a Lambda function that periodically opens a HTTP{S} connection to each of a set of websites, and posts to a SNS topic in the event of a failure.
 
 ## Directory Structure
 
@@ -15,22 +15,23 @@ A convention-driven collection of utilities for AWS CloudFormation & Lambda, imp
 ├── cloudformation            # YAML representation of CloudFormation. Each file => 1 CF stack.
 │   ├── dn_stack.yaml.jinja
 │   └── kms_stack.yaml.jinja
-├── cloudformation_config     # Configuration to be injected; .local.yaml files are gitignored.
+├── cloudformation_config     # Per-stack YAML config to be injected. .local.yaml files are gitignored.
 │   ├── dn_stack.local.yaml
 │   ├── dn_stack.yaml
 │   └── kms_stack.local.yaml
 ├── fabfile.py                # Contains task definitions. To run: `fab $TASK_NAME`.
-├── lambda                    # Root directory for Lambda functions. See below.
+├── lambda                    # Root directory for Lambda functions (see 5).
 │   └── downtime_notifier/
 │   └── other_function1/
 │   └── other_function2/
-└── requirements.txt          # Dependencies for fab_aws. Install locally using pip.
+└── requirements.txt          # Dependencies for fab_aws. Installed locally using pip (see 0).
 ```
 
 ## 0) Install
 
 1. Set up a `virtualenv` (I recommend [`pyenv-virtualenv`](https://github.com/yyuu/pyenv-virtualenv), highly):
   * `pyenv virtualenv fab_aws`
+  * `pyenv activate fab_aws`
 2. Install dependencies:
   * `pip install -U -r requirements.txt`
 3. From this point forward, the `fab` command will be available to run the tasks from `fabfile.py`.
@@ -95,7 +96,7 @@ Outputs:
 This is all convention driven, based on filename: configuration from `cloudformation_config/dn_stack.yaml` is injected into a CloudFormation-YAML template at `cloudformation/dn_stack.yaml.jinja`, and rendered out as CloudFormation-JSON at `_output/dn_stack.template`:
 
 ```bash
-# Render all YAML templates to JSON, and validate against the CloudFormation API.
+# Render all YAML templates to JSON, injecting config, and validate against the CloudFormation API.
 fab render validate
 ```
 
@@ -131,8 +132,9 @@ lambda/downtime_notifier                   # Root directory for the function ele
 │   ├── 2016-06-15T17.22.40.467141-dn.zip
 │   ├── 2016-06-15T17.24.41.938070-dn.zip
 ├── _staging                               # Staging area used prior to zip packaging.
-├── downtime_notifier                      # A Python module for the Lambda function's code.
+├── downtime_notifier                      # A Python package for function specific modules.
 │   ├── __init__.py
+│   ├── checker.py
 │   ├── config.py
 │   ├── localcontext.py
 │   ├── utility.py
@@ -141,6 +143,7 @@ lambda/downtime_notifier                   # Root directory for the function ele
 │   ├── env.local.yaml                     # gitignored Lambda configuration.
 │   └── env.yaml                           # Lambda configuration.
 └── requirements.txt                       # Lambda-function specific dependencies to install.
+                                           # e.g. downtime_notifier requires `requests`.
 ```
 
 ### Lambda Configuration
@@ -152,7 +155,18 @@ As above, `.local.yaml` files in `lambda_config` are git-ignored.
 ### Decrypting KMS secrets
 Configuration keys with an `encrypted_` prefix are assumed to be encrypted by KMS. `config.py` will attempt to decrypt these first. To ensure this is possible, the Lambda role under which this function runs should have the `Decrypt:*` privilege specified in the key policy.
 
-## 6) Build Deployable Lambda Package
+## 6) Install the Lambda Dependencies and Run Locally
+During development, it is useful to invoke Lambda functions locally, before they are deployed onto AWS. There's a `fab` task for this:
+
+```bash
+FUNCTION=downtime_notifier
+fab install_reqs:function_name=$FUNCTION
+fab invoke:function_name=$FUNCTION
+```
+
+## 7) Build Deployable Lambda Package
+
+Construct a `.zip` file of all the elements necessary for the deployed packages:
 
 ```bash
 # Installs dependencies and builds a deployable zip file.
@@ -162,9 +176,8 @@ FUNCTION=downtime_notifier
 fab build:function_name=$FUNCTION
 ```
 
-## 7) Deploy Lambda Package
-
-This will update the currently deployed Lambda code to the latest build.
+## 8) Deploy Lambda Package
+This will update the currently deployed Lambda code to the contents of the latest build.
 
 ```bash
 # Installs the latest built Lambda package to the specified Lambda function ARN.
