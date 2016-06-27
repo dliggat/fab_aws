@@ -114,12 +114,35 @@ timeout: 180
 These values can be accessed within the Jinja templates:
 
 ```jinja
-Parameters:
-  ScheduleExpression:
-    Type: String
-    Default: {{ dn_stack['schedule_expression'] }}
-    Description: How often to invoke the {{ __name__ }} function
+# cloudformation/dn_stack.yaml.jinja
+Resources:
+  LambdaFunction:
+    Type: AWS::Lambda::Function
+    Metadata:
+      Comment: {{ dn_stack['description'] }}
+    DependsOn: [ LambdaFunctionExecutionRole ]
+    Properties:
+      Code:
+        ZipFile:
+          "Fn::Join":
+            - "\n"
+            - - "def handler(event, context):"
+              - "    print('This is a no-op; will be overwritten later.')"
+      Role: { "Fn::GetAtt": [ LambdaFunctionExecutionRole, Arn ] }
+      Timeout: {{ dn_stack['timeout'] }}
+      Handler: index.handler
+      Runtime: python2.7
+      MemorySize: {{ dn_stack['memory_size'] }}
 ```
+
+### Parameters
+CloudFormation **Parameter** values to be treated as such during a `create_stack`/`update_stack` operation, can be supplied in a `parameters:` section of the config:
+
+```yaml
+# cloudformation_config/kms_stack.yaml
+parameters:
+  PermitDecryptionByRoleArn0: arn:aws:iam::111111111111:role/downtime-notifier-stack-LambdaFunctionExecutionRol-X9BTVOQQA09X
+  ```
 
 ### Local CloudFormation Configuration
 
