@@ -1,6 +1,6 @@
 # fab_aws
 
-A convention-driven collection of utilities for AWS CloudFormation & Lambda, implemented as Python Fabric tasks. As an initial proof-of-concept, the elements herein implement a **downtime-notifier** system for websites; i.e. a Lambda function that periodically opens a HTTP{S} connection to each of a set of websites, and posts to a SNS topic in the event of a failure.
+A convention-driven collection of utilities for AWS CloudFormation & Lambda, implemented as Python Fabric tasks. As an initial proof-of-concept, the elements herein implement a [downtime-notifier](https://github.com/dliggat/fab_aws/wiki/A-Downtime-Notifier-Stack) system for websites; i.e. a Lambda function that periodically opens a HTTP{S} connection to each of a set of websites, and posts to a SNS topic in the event of a failure.
 
 ## Directory Structure
 
@@ -93,13 +93,33 @@ Outputs:
 
 `fab_aws` converts CloudFormation YAML from `cloudformation/` into JSON, and injects configuration state from `cloudformation_config/` along the way. Final output appears at `_output/`.
 
-This is all convention driven, based on filename: configuration from `cloudformation_config/dn_stack.yaml` is injected into a CloudFormation-YAML template at `cloudformation/dn_stack.yaml.jinja`, and rendered out as CloudFormation-JSON at `_output/dn_stack.template`:
-
 ```bash
 # Render all YAML templates to JSON, injecting config, and validate against the CloudFormation API.
+# Rendered files can be found in `_output/`.
 fab render validate
 ```
 
+This is all convention driven, based on filename: configuration from `cloudformation_config/dn_stack.yaml` is injected into a CloudFormation-YAML template at `cloudformation/dn_stack.yaml.jinja`, and rendered out as CloudFormation-JSON at `_output/dn_stack.template`.
+
+Configuration is straightforward:
+
+```yaml
+# cloudformation_config/dn_stack.yaml
+display_name: Downtime Notifier Bot
+schedule_expression: rate(5 minutes)
+memory_size: 256
+timeout: 180
+```
+
+These values can be accessed within the Jinja templates:
+
+```jinja
+Parameters:
+  ScheduleExpression:
+    Type: String
+    Default: {{ dn_stack['schedule_expression'] }}
+    Description: How often to invoke the {{ __name__ }} function
+```
 
 ### Local CloudFormation Configuration
 
@@ -183,6 +203,10 @@ This will update the currently deployed Lambda code to the contents of the lates
 # Installs the latest built Lambda package to the specified Lambda function ARN.
 
 FUNCTION_NAME=downtime_notifier
-ARN=arn=arn:aws:lambda:us-west-2:111111111:function:downtime-notifier-stack-LambdaFunction-J3R
+ARN=arn=arn:aws:lambda:us-west-2:111111111111:function:downtime-notifier-stack-LambdaFunction-J3R
 fab deploy:function_name=$FUNCTION_NAME,arn=$ARN
+```
 
+## 9) Run Tests
+
+TODO!
