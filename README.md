@@ -1,10 +1,10 @@
-# cf_toolkit
+# fab_aws
 
 A convention-driven collection of utilities for AWS CloudFormation & Lambda, implemented as Python Fabric tasks. As an initial proof-of-concept, the elements herein implement a **downtime-notifier** system for websites; i.e. a Lambda function that periodically opens a HTTP connection to each of a set of websites, and posts to a SNS topic in the event of a failure.
 
 ## Directory Structure
 
-`cf_toolkit` uses the following basic structure:
+`fab_aws` uses the following basic structure:
 
 ```bash
 .
@@ -24,20 +24,20 @@ A convention-driven collection of utilities for AWS CloudFormation & Lambda, imp
 │   └── downtime_notifier/
 │   └── other_function1/
 │   └── other_function2/
-└── requirements.txt          # Dependencies for cf_toolkit. Install locally using pip.
+└── requirements.txt          # Dependencies for fab_aws. Install locally using pip.
 ```
 
 ## 0) Install
 
 1. Set up a `virtualenv` (I recommend [`pyenv-virtualenv`](https://github.com/yyuu/pyenv-virtualenv), highly):
-  * `pyenv virtualenv cf_toolkit`
+  * `pyenv virtualenv fab_aws`
 2. Install dependencies:
   * `pip install -U -r requirements.txt`
 3. From this point forward, the `fab` command will be available to run the tasks from `fabfile.py`.
 
 
 ## 1) Configure AWS Credentials
-`cf_toolkit` uses the `boto3` Python AWS SDK. When the Fabric tasks are run, the **AWS credentials are inherited from the containing shell**. For most AWS users, this probably means that you have one or more AWS profiles configured, and a particular one either enabled or set to the default. As I interact with numerous profiles on a daily basis, I used [named profiles](https://liggat.org/juggling-multiple-aws-profiles/) to handle this. If you do not have profiles set up, [this article](http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html) in the AWS documentation explains the configuration, as well as the other precedence-based options that exist for authentication.
+`fab_aws` uses the `boto3` Python AWS SDK. When the Fabric tasks are run, the **AWS credentials are inherited from the containing shell**. For most AWS users, this probably means that you have one or more AWS profiles configured, and a particular one either enabled or set to the default. As I interact with numerous profiles on a daily basis, I used [named profiles](https://liggat.org/juggling-multiple-aws-profiles/) to handle this. If you do not have profiles set up, [this article](http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html) in the AWS documentation explains the configuration, as well as the other precedence-based options that exist for authentication.
 
 
 ## 2) Write CloudFormation in YAML
@@ -90,7 +90,7 @@ Outputs:
 
 ## 3) Render CloudFormation JSON
 
-`cf_toolkit` converts CloudFormation YAML from `cloudformation/` into JSON, and injects configuration state from `cloudformation_config/` along the way. Final output appears at `_output/`.
+`fab_aws` converts CloudFormation YAML from `cloudformation/` into JSON, and injects configuration state from `cloudformation_config/` along the way. Final output appears at `_output/`.
 
 This is all convention driven, based on filename: configuration from `cloudformation_config/dn_stack.yaml` is injected into a CloudFormation-YAML template at `cloudformation/dn_stack.yaml.jinja`, and rendered out as CloudFormation-JSON at `_output/dn_stack.template`:
 
@@ -123,7 +123,7 @@ Note that the `stack_name` must be unique within your current set of CloudFormat
 
 ## 5) Create and maintain Lambda code
 
-`cf_toolkit` specifies a particular directory structure for Lambda functions. Adhering to this structure allows for very convenient code organization, package builds, and deployment to a live Lambda function ARN.
+`fab_aws` specifies a particular directory structure for Lambda functions. Adhering to this structure allows for very convenient code organization, package builds, and deployment to a live Lambda function ARN.
 
 ```bash
 lambda/downtime_notifier                   # Root directory for the function elements.
@@ -164,5 +164,12 @@ fab build:function_name=$FUNCTION
 
 ## 7) Deploy Lambda Package
 
-TODO
+This will update the currently deployed Lambda code to the latest build.
+
+```bash
+# Installs the latest built Lambda package to the specified Lambda function ARN.
+
+FUNCTION_NAME=downtime_notifier
+ARN=arn=arn:aws:lambda:us-west-2:111111111:function:downtime-notifier-stack-LambdaFunction-J3R
+fab deploy:function_name=$FUNCTION_NAME,arn=$ARN
 

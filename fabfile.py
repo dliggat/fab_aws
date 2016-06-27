@@ -258,6 +258,33 @@ def build(function_name=None):
     local('cd {0}; zip -r {1} ./*; mv {1} {2}'.format(staging_dir, build_filename, builds_dir))
 
 
+@task
+def deploy(function_name=None, arn=None):
+    """Uploads the latest build of the function package to the Lambda ARN.
+
+    Args:
+        function_name: (str) The Lambda function within the lambda/ directory to work on.
+        arn: (str) The ARN of the deployed function.
+    """
+    if not function_name:
+        abort('Must provide function_name')
+    if not arn:
+        abort('Must provide arn')
+
+    lambda_root = os.path.join(LAMBDA_DIR, function_name)
+    builds_dir = os.path.join(lambda_root, BUILDS_SUBDIR)
+    builds = sorted(glob.glob(os.path.join(builds_dir, '*.{0}'.format('zip'))))
+    if not builds:
+        abort('No builds exist. Run a `build` command first')
+    latest_build = builds[-1]
+    logging.info('Preparing to deploy build: {0}'.format(latest_build))
+
+    client = boto3.client('lambda')
+    with open(latest_build, 'rb') as zip_file:
+        response = client.update_function_code(FunctionName=arn, ZipFile=zip_file.read())
+        logger.info(json.dumps(response, indent=2))
+
+
 
 
 
