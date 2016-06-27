@@ -105,6 +105,7 @@ Configuration is straightforward:
 
 ```yaml
 # cloudformation_config/dn_stack.yaml
+description: A function to monitor websites, and alert on unavailability
 display_name: Downtime Notifier Bot
 schedule_expression: rate(5 minutes)
 memory_size: 256
