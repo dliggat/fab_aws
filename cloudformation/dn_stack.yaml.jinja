@@ -69,6 +69,29 @@ Resources:
               - Effect: Allow
                 Action: [ "sns:Publish" ]
                 Resource: { Ref : NotificationTopic }
+        - PolicyName: ReadWriteDynamoResultTable
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:DescribeTable
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:Query
+                Resource:
+                  "Fn::Join":
+                    - ":"
+                    - - "arn"
+                      - "aws"
+                      - "dynamodb"
+                      - { "Ref": "AWS::Region" }
+                      - { "Ref" : "AWS::AccountId" }
+                      - "Fn::Join":
+                        - "/"
+                        - - "table"
+                          - { "Ref" : "ResultTable" }
+
       # Unused.
       # ManagedPolicyArns:
       #   - arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess
@@ -112,6 +135,40 @@ Resources:
       {% endfor %}
 
 
+  # DynamoDB table for caching results.
+  ResultTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: TargetId
+          AttributeType: S
+        - AttributeName: Timestamp
+          AttributeType: S
+      KeySchema:
+        - AttributeName: TargetId
+          KeyType: HASH
+        - AttributeName: Timestamp
+          KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 10
+        WriteCapacityUnits: 10
+      # GlobalSecondaryIndexes:
+      #   - IndexName: myGSI
+      #     KeySchema:
+      #       - AttributeName: IsNormal
+      #         KeyType: HASH
+      #       - AttributeName: SiteName
+      #         KeyType: RANGE
+      #     Projection:
+      #       NonKeyAttributes:
+      #         - CheckTimestamp
+      #       ProjectionType: INCLUDE
+      #     ProvisionedThroughput:
+      #       ReadCapacityUnits: 5
+      #       WriteCapacityUnits: 5
+
+
 
 Outputs:
   LambdaFunction:
@@ -122,5 +179,7 @@ Outputs:
     Value: { Ref : LambdaFunctionExecutionRole }
   LambdaFunctionExecutionRoleARN:
     Value: { "Fn::GetAtt": [ LambdaFunctionExecutionRole, Arn ] }
+  ResultTable:
+    Value: { Ref : ResultTable }
   SnsTopic:
     Value: { Ref : NotificationTopic }
