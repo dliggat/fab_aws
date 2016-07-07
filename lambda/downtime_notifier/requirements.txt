@@ -1,2 +1,3 @@
 pyaml==15.8.2
 requests
+retrying
