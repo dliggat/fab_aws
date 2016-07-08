@@ -14,17 +14,17 @@ from downtime_notifier import StateTracker
 MAX_LEN = 100
 CONFIG = configuration()
 
-def setup_logging(id):
+def setup_logging(request_id):
     """Creates the logging formatter.
 
     Args:
-        id: (str) The id of the execution context (i.e. the Lambda execution ID).
+        request_id: (str) The id of the execution context (i.e. the Lambda execution ID).
     """
     logger = logging.getLogger()
-    logger.info('STARTING RequestId: {0}'.format(id))
+    # logger.info('STARTING RequestId: {0}'.format(request_id))
     console_handler = logging.StreamHandler()
     formatter = logging.Formatter(
-        '[%(levelname)s] %(asctime)s {0} [thread %(threadName)s][%(module)s:%(lineno)d]: %(message)s'.format(id))
+        '[%(levelname)s] %(asctime)s {0} [thread %(threadName)s][%(module)s:%(lineno)d]: %(message)s'.format(request_id))
     console_handler.setFormatter(formatter)
 
     logger.handlers = []  # Get rid of any default handlers (Lambda apparently adds one).
@@ -36,8 +36,11 @@ def setup_logging(id):
 def handler(event, context):
     """Entry point for the Lambda function."""
     global logger
-    logger = setup_logging(event['id'])
+    logger = setup_logging(context.aws_request_id)
     logger.info('Using configuration: {0}'.format(CONFIG))
+    logger.info('Using event: {0}'.format(event))
+    logger.info('Using context: {0}'.format(context))
+
 
     # Build a Checker object; start each as a thread and join on the set.
     checkers = []
@@ -90,6 +93,5 @@ def notify(checkers, title_prefix):
 
 if __name__ == '__main__':
     # For invoking the lambda function in the local environment.
-    from downtime_notifier import local_event
     from downtime_notifier import LocalContext
-    handler(local_event(), LocalContext())
+    handler(None, LocalContext())
