@@ -46,7 +46,7 @@ def handler(event, context):
             title_prefix = CONFIG['env']['downtime_detected_prefix']
         else:
             title_prefix = CONFIG['env']['state_changed_prefix']
-        notify(checkers, title_prefix)
+        notify(checkers_to_notify, title_prefix)
     else:
         logger.info("All checks passed.")
 
