@@ -1,10 +1,10 @@
 import boto3
-from boto3.dynamodb.conditions import Key, Attr
 import datetime
-import sys
+import logging
 import pprint
+import sys
 
-import logging #; logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+from boto3.dynamodb.conditions import Key, Attr
 
 from downtime_notifier import configuration
 from downtime_notifier import Checker
@@ -14,7 +14,7 @@ from downtime_notifier import StateTracker
 MAX_LEN = 100
 CONFIG = configuration()
 
-def setupLogging():
+def setup_logging():
     console_handler = logging.StreamHandler()
     formatter = logging.Formatter(
         '[%(levelname)s] %(asctime)s [thread %(threadName)s][%(module)s:%(lineno)d]: %(message)s')
@@ -25,12 +25,11 @@ def setupLogging():
     logger.setLevel(logging.INFO)
     return logger
 
-logger = setupLogging()
+logger = setup_logging()
 
 
 def handler(event, context):
     """Entry point for the Lambda function."""
-
     logger.info('Using configuration: {0}'.format(CONFIG))
 
     # Build a Checker object; start each as a thread and join on the set.

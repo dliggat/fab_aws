@@ -1,9 +1,10 @@
 import boto3
-from boto3.dynamodb.conditions import Key, Attr
-
 import logging
 
+from boto3.dynamodb.conditions import Key, Attr
+
 logger = logging.getLogger()
+
 
 class StateTracker(object):
 
