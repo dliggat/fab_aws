@@ -14,22 +14,29 @@ from downtime_notifier import StateTracker
 MAX_LEN = 100
 CONFIG = configuration()
 
-def setup_logging():
+def setup_logging(id):
+    """Creates the logging formatter.
+
+    Args:
+        id: (str) The id of the execution context (i.e. the Lambda execution ID).
+    """
+    logger = logging.getLogger()
+    logger.info('STARTING RequestId: {0}'.format(id))
     console_handler = logging.StreamHandler()
     formatter = logging.Formatter(
-        '[%(levelname)s] %(asctime)s [thread %(threadName)s][%(module)s:%(lineno)d]: %(message)s')
+        '[%(levelname)s] %(asctime)s {0} [thread %(threadName)s][%(module)s:%(lineno)d]: %(message)s'.format(id))
     console_handler.setFormatter(formatter)
 
-    logger = logging.getLogger()
+    logger.handlers = []  # Get rid of any default handlers (Lambda apparently adds one).
     logger.addHandler(console_handler)
     logger.setLevel(logging.INFO)
     return logger
 
-logger = setup_logging()
-
 
 def handler(event, context):
     """Entry point for the Lambda function."""
+    global logger
+    logger = setup_logging(event['id'])
     logger.info('Using configuration: {0}'.format(CONFIG))
 
     # Build a Checker object; start each as a thread and join on the set.
@@ -55,9 +62,10 @@ def handler(event, context):
             title_prefix = CONFIG['env']['downtime_detected_prefix']
         else:
             title_prefix = CONFIG['env']['state_changed_prefix']
+        logger.warn('{0} Will notify SNS topic'.format(title_prefix))
         notify(checkers_to_notify, title_prefix)
     else:
-        logger.info("All checks passed.")
+        logger.info('All checks passed.')
 
 
 def notify(checkers, title_prefix):
@@ -82,5 +90,6 @@ def notify(checkers, title_prefix):
 
 if __name__ == '__main__':
     # For invoking the lambda function in the local environment.
+    from downtime_notifier import local_event
     from downtime_notifier import LocalContext
-    handler(None, LocalContext())
+    handler(local_event(), LocalContext())

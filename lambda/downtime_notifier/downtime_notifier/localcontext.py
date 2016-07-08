@@ -1,4 +1,7 @@
+import uuid
+
 from utility import Utility
+
 
 class LocalContext(object):
     """A simulated context object for local execution of Lambda functions."""
@@ -11,3 +14,8 @@ class LocalContext(object):
 
     def __str__(self):
       return self.invoked_function_arn
+
+
+def local_event():
+    """Simulate the event payload that comes into the Lambda entry point."""
+    return {'account': str(Utility.aws_account_id()), 'id': str(uuid.uuid1())}
