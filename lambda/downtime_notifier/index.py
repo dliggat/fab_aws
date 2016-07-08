@@ -13,8 +13,10 @@ from downtime_notifier import StateTracker
 
 MAX_LEN = 100
 CONFIG = configuration()
+logging.basicConfig(format='%(asctime)s %(module)s [thread %(threadName)s] %(message)s',
+    level=logging.INFO)
 logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+
 
 def handler(event, context):
     """Entry point for the Lambda function."""
@@ -46,7 +48,7 @@ def handler(event, context):
             title_prefix = CONFIG['env']['state_changed_prefix']
         notify(checkers, title_prefix)
     else:
-        logger.info("All checks passed: {0}.".format(datetime.datetime.now()))
+        logger.info("All checks passed.")
 
 
 def notify(checkers, title_prefix):
@@ -72,5 +74,4 @@ def notify(checkers, title_prefix):
 if __name__ == '__main__':
     # For invoking the lambda function in the local environment.
     from downtime_notifier import LocalContext
-    logging.basicConfig(level=logging.INFO)
     handler(None, LocalContext())
