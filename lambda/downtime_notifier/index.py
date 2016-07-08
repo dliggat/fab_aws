@@ -16,27 +16,27 @@ def handler(event, context):
     """Entry point for the Lambda function."""
 
     print('Using configuration: {0}'.format(CONFIG))
-    trackers = []
-    timestamp = datetime.datetime.now()
 
-    # Build a Checker object, and associate with a StateTracker.
+    # Build a Checker object; start each as a thread and join on the set.
+    checkers = []
     for site in CONFIG.get('env', {}).get('sites', []):
         c = Checker(**site)
         c.start()
-        t = StateTracker(c, CONFIG['env']['dynamo_table'], timestamp)
-        trackers.append(t)
+        checkers.append(c)
 
-    for tracker in trackers:
-        tracker.checker.join()
+    for checker in checkers:
+        checker.join()
 
-    # Record the outcome in the result table.
+    # Record the outcome of each Checker in the result table via a StateTracker.
+    timestamp = datetime.datetime.now()
+    trackers = [StateTracker(c, CONFIG['env']['dynamo_table'], timestamp) for c in checkers]
     for tracker in trackers:
         tracker.put_result()
 
-    # Notify the SNS topic if any tracker indicates thusly.
-    checkers = [t.checker for t in trackers if t.notify]
-    if checkers:
-        if any([c.exceptional for c in checkers]):
+    # Notify the SNS topic if any StateTracker indicates thusly.
+    checkers_to_notify = [t.checker for t in trackers if t.notify]
+    if checkers_to_notify:
+        if any([c.exceptional for c in checkers_to_notify]):
             title_prefix = CONFIG['env']['downtime_detected_prefix']
         else:
             title_prefix = CONFIG['env']['state_changed_prefix']
