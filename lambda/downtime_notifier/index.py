@@ -1,7 +1,10 @@
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
 import datetime
+import sys
 import pprint
+
+import logging; logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
 from downtime_notifier import configuration
 from downtime_notifier import Checker
@@ -10,12 +13,13 @@ from downtime_notifier import StateTracker
 
 MAX_LEN = 100
 CONFIG = configuration()
+logger = logging.getLogger()
 
 
 def handler(event, context):
     """Entry point for the Lambda function."""
 
-    print('Using configuration: {0}'.format(CONFIG))
+    logger.info('Using configuration: {0}'.format(CONFIG))
 
     # Build a Checker object; start each as a thread and join on the set.
     checkers = []
@@ -42,7 +46,7 @@ def handler(event, context):
             title_prefix = CONFIG['env']['state_changed_prefix']
         notify(checkers, title_prefix)
     else:
-        print("All checks passed: {0}.".format(datetime.datetime.now()))
+        logger.info("All checks passed: {0}.".format(datetime.datetime.now()))
 
 
 def notify(checkers, title_prefix):
@@ -62,7 +66,7 @@ def notify(checkers, title_prefix):
         Message=message,
         Subject=subject[0:MAX_LEN],
         MessageStructure='string')
-    print(response)
+    logger.info(response)
 
 
 if __name__ == '__main__':

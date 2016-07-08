@@ -1,6 +1,9 @@
+import logging
 import requests
 import retrying
 import threading
+
+logger = logging.getLogger()
 
 
 class Checker(threading.Thread):
@@ -74,7 +77,7 @@ class Checker(threading.Thread):
         wait_exponential_max=5000)
     def _attempt_request(self):
         """Attempt to connect; use exponential backoff if an error occurs."""
-        print('Attempting a request for {0}'.format(self.name))
+        logger.info('Attempting a request for {0}'.format(self.name))
         req = requests.get(self.url, timeout=self.TIMEOUT, allow_redirects=False)
 
         # Check the status code against what was expected.

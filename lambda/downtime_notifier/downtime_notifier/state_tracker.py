@@ -1,6 +1,9 @@
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
 
+import logging
+
+logger = logging.getLogger()
 
 class StateTracker(object):
 
@@ -54,7 +57,7 @@ class StateTracker(object):
         else:                  # This is the first time we've seen this value.
             self._first_check = True
 
-        print(response)
+        logger.info(response)
 
 
     @property
