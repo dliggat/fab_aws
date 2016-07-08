@@ -4,7 +4,7 @@ import datetime
 import sys
 import pprint
 
-import logging; logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+import logging #; logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
 from downtime_notifier import configuration
 from downtime_notifier import Checker
@@ -14,7 +14,7 @@ from downtime_notifier import StateTracker
 MAX_LEN = 100
 CONFIG = configuration()
 logger = logging.getLogger()
-
+logger.setLevel(logging.INFO)
 
 def handler(event, context):
     """Entry point for the Lambda function."""
@@ -72,4 +72,5 @@ def notify(checkers, title_prefix):
 if __name__ == '__main__':
     # For invoking the lambda function in the local environment.
     from downtime_notifier import LocalContext
+    logging.basicConfig(level=logging.INFO)
     handler(None, LocalContext())
