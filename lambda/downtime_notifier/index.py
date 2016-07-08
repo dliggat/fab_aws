@@ -13,9 +13,19 @@ from downtime_notifier import StateTracker
 
 MAX_LEN = 100
 CONFIG = configuration()
-logging.basicConfig(format='%(asctime)s %(module)s [thread %(threadName)s] %(message)s',
-    level=logging.INFO)
-logger = logging.getLogger()
+
+def setupLogging():
+    console_handler = logging.StreamHandler()
+    formatter = logging.Formatter(
+        '[%(levelname)s] %(asctime)s [thread %(threadName)s][%(module)s:%(lineno)d]: %(message)s')
+    console_handler.setFormatter(formatter)
+
+    logger = logging.getLogger()
+    logger.addHandler(console_handler)
+    logger.setLevel(logging.INFO)
+    return logger
+
+logger = setupLogging()
 
 
 def handler(event, context):
