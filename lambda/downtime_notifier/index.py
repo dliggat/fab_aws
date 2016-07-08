@@ -22,9 +22,12 @@ def handler(event, context):
     # Build a Checker object, and associate with a StateTracker.
     for site in CONFIG.get('env', {}).get('sites', []):
         c = Checker(**site)
-        c.check()
+        c.start()
         t = StateTracker(c, CONFIG['env']['dynamo_table'], timestamp)
         trackers.append(t)
+
+    for tracker in trackers:
+        tracker.checker.join()
 
     # Record the outcome in the result table.
     for tracker in trackers:

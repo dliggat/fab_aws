@@ -1,8 +1,9 @@
 import requests
 import retrying
+import threading
 
 
-class Checker(object):
+class Checker(threading.Thread):
 
     TIMEOUT = 10
     class UnexpectedHttpStatusError(Exception):
@@ -19,7 +20,8 @@ class Checker(object):
             expected_code: (int) The expected return code of the GET
             expected_text: (str) A string to search for in the returned payload
         """
-        assert url and name
+        assert(all([url, name]))
+        super(Checker, self).__init__()
         self.url = url
         self.name = name
         self.expected_code = expected_code
@@ -37,7 +39,7 @@ class Checker(object):
         """(bool) True if the GET behaved as expected/desired, else False."""
         return self._exceptional
 
-    def check(self):
+    def run(self):
         """Run a GET on the url, and build a message detailing any exceptional circumstances."""
         try:
             self._attempt_request()
