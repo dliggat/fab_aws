@@ -21,7 +21,7 @@ def setup_logging(request_id):
         request_id: (str) The id of the execution context (i.e. the Lambda execution ID).
     """
     logger = logging.getLogger()
-    # logger.info('STARTING RequestId: {0}'.format(request_id))
+    logger.info('Setting up logging')
     console_handler = logging.StreamHandler()
     formatter = logging.Formatter(
         '[%(levelname)s] %(asctime)s {0} [thread %(threadName)s][%(module)s:%(lineno)d]: %(message)s'.format(request_id))
@@ -94,4 +94,5 @@ def notify(checkers, title_prefix):
 if __name__ == '__main__':
     # For invoking the lambda function in the local environment.
     from downtime_notifier import LocalContext
-    handler(None, LocalContext())
+    context = LocalContext()
+    handler(None, context)
