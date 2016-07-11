@@ -1,10 +1,7 @@
 import boto3
 import datetime
 import logging
-import pprint
 import sys
-
-from boto3.dynamodb.conditions import Key, Attr
 
 from downtime_notifier import configuration
 from downtime_notifier import Checker
