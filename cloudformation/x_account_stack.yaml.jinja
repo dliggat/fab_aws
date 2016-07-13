@@ -1,0 +1,138 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: A {{ __name__ }} implementation.
+
+{% set UserCount = 1 %}
+
+
+Metadata:
+  CommitHash: {{ git['hash'] }}
+  CommitDescription: {{ git['message'] }}
+  AnyUncommittedChanges?: {{ git['uncommitted'] }}
+  "AWS::CloudFormation::Interface":
+    ParameterGroups:
+      - Label:
+          default: Trust Configuration
+        Parameters:
+          - TrustedAwsAccountId
+          - TrustedIamEntity
+
+      - Label:
+          default: Optional Additional Trusted Entities
+        Parameters:
+          {% for i in range(UserCount) %}
+          - TrustedIamUser{{ i }}
+          {% endfor %}
+
+      - Label:
+          default: Level of Access to Grant to the Trusted Entities
+        Parameters:
+          - ManagedPolicy
+
+    ParameterLabels:
+      ManagedPolicy:
+        default: Managed Policy
+      TrustedAwsAccountId:
+        default: ID of the trusted AWS account
+      TrustedIamEntity:
+        default: The entity in the trusted AWS account
+
+
+Parameters:
+  ManagedPolicy:
+    Type: String
+    Default: "arn:aws:iam::aws:policy/ReadOnlyAccess"
+    Description: The managed policy to apply to the trusted entities
+    AllowedValues:
+      - "arn:aws:iam::aws:policy/ReadOnlyAccess"
+      - "arn:aws:iam::aws:policy/PowerUserAccess"
+      - "arn:aws:iam::aws:policy/AdministratorAccess"
+
+  TrustedAwsAccountId:
+    Type: String
+    Description: The account ID to trust
+
+  TrustedIamEntity:
+    Type: String
+    Default: root
+    Description: e.g. 'root' (everyone in the trusted account), or a specific IAM user in the trusted AWS account, e.g. 'user/joe'
+
+  {% for i in range(UserCount) %}
+  TrustedIamUser{{ i }}:
+    Type: String
+    Description: A specific IAM user in the trusted AWS account, e.g. 'user/joe' (The 'user/' prefix is necessary)
+    Default: ""
+  {% endfor %}
+
+Conditions:
+  {% for i in range(UserCount) %}
+  NoTrustedIamUser{{ i }}:
+    "Fn::Equals":
+      - { Ref: TrustedIamUser{{ i }} }
+      - ""
+  {% endfor %}
+
+Resources:
+  CrossAccountRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - { Ref: ManagedPolicy }
+      # Policies:  # Arbitrary policies go here.
+      #   - PolicyName: permit-whatever
+      #     PolicyDocument:
+      #       Version: "2012-10-17"
+      #       Statement:
+      #         Effect: Allow
+      #         Action:
+      #           - "s3:ListBucket"
+      #           - "s3:ListObjects"
+      #         Resource: "*"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action: "sts:AssumeRole"
+            Condition:
+              Bool:
+                "aws:MultiFactorAuthPresent": true
+            Principal:
+              AWS:
+                - "Fn::Join":
+                  - ""
+                  - - "arn:aws:iam::"
+                    - { Ref: TrustedAwsAccountId }
+                    - ":"
+                    - { Ref: TrustedIamEntity }
+
+                {% for i in range(UserCount) %}
+                - "Fn::If":
+                  - NoTrustedIamUser{{ i }}
+                  - { Ref: "AWS::NoValue" }
+                  - "Fn::Join":
+                    - ""
+                    - - "arn:aws:iam::"
+                      - { Ref: TrustedAwsAccountId }
+                      - ":"
+                      - { Ref: TrustedIamUser{{ i }} }
+                {% endfor %}
+
+Outputs:
+  CrossAccountRoleName:
+    Value: { Ref: CrossAccountRole }
+  CrossAccountRoleArn:
+    Value:
+      "Fn::GetAtt":
+        - CrossAccountRole
+        - Arn
+  SigninUrl:
+    Value:
+      "Fn::Join":
+        - ""
+        - - "https://signin.aws.amazon.com/switchrole?account="
+          - { Ref: "AWS::AccountId" }
+          - "&roleName="
+          - { Ref: CrossAccountRole }
+
+
+
