@@ -35,8 +35,7 @@ def construct_yaml_ordered_map(loader, node, deep=False):
     value = construct_ordered_mapping(loader, node, deep)
     data.update(value)
 
-mapping_tag = yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG
-yaml.add_constructor(mapping_tag, construct_yaml_ordered_map)
+yaml.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_yaml_ordered_map)
 
 
 # Various constants and config setup.
@@ -227,7 +226,6 @@ def build(function_name=None):
     """
     if not function_name:
         abort('Must provide function_name')
-
 
     lambda_root = os.path.join(LAMBDA_DIR, function_name)
     module_dir = os.path.join(lambda_root, function_name)
