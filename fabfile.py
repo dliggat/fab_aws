@@ -119,7 +119,7 @@ def render():
         rendered = template.render(**config)
         data = yaml.load(rendered)
 
-        output_str  = json.dumps(data, indent=2)
+        output_str  = json.dumps(data, indent=2, separators=(',', ': '))
         output_file = os.path.join(OUTPUT_DIR, os.path.basename(input_file).split('.')[0]) + OUTPUT_EXT
         with open(output_file, 'w') as output_contents:
             output_contents.write(output_str)
