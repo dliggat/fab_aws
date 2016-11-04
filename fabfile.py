@@ -62,7 +62,10 @@ def load_config():
     """Load the config from the config directory into a deep dict, keyed by stack type."""
     config = {'git': {'hash': subprocess.check_output(['git', 'rev-parse', 'HEAD'])[:-1],
                       'message': subprocess.check_output([
-                          'git', 'log', '-1', '--pretty=%B']).strip().replace('"', ''),
+                          'git', 'log', '-1', '--pretty=%B']).strip().replace('"', '')
+                                                                     .replace('#', '')
+                                                                     .replace('\n', '')
+                                                                     .replace(':', ' '),
                       'uncommitted': True if subprocess.call(
                           'git diff-index --quiet HEAD --'.split(' ')) else False }}
 
